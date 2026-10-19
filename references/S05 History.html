@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            sky: { soft: '#E6EFF4', ink: '#41708C' },
+            sand: { soft: '#F4ECE2', ink: '#86654A' },
+            lilac: { soft: '#ECEAF4', ink: '#5E5A86' },
+            cream: '#FAF9F6',
+            line: '#ECEAE5',
+            ink: '#2F3A35',
+            muted: '#6B746F',
+            danger: '#B4543E'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    #history-scroll::-webkit-scrollbar { display: none; }
+    #history-scroll { scrollbar-width: none; }
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  </style>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="history-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <div aria-hidden="true" class="pointer-events-none absolute -top-32 -right-24 h-[300px] w-[300px] rounded-full bg-sage-100/70 blur-3xl"></div>
+
+    <div id="history-scroll" class="relative z-10 flex-1 overflow-y-auto px-5 pb-8">
+
+      <!-- 1. Header -->
+      <header id="header" class="pt-12">
+        <h1 class="font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink">History</h1>
+        <p class="text-[14px] text-muted">Emma's daily activities</p>
+      </header>
+
+      <!-- 2. Date navigation -->
+      <section id="date-nav" class="mt-4 flex items-center gap-2">
+        <button id="prev-day" type="button" aria-label="Previous day" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-white text-sage-700 shadow-[0_2px_8px_-4px_rgba(47,58,53,0.15)] transition hover:bg-sage-50 active:scale-95">
+          <i class="fa-solid fa-chevron-left text-[13px]"></i>
+        </button>
+        <div class="relative flex-1">
+          <div class="flex h-11 items-center justify-center gap-2 rounded-full border border-line bg-white px-3 transition hover:bg-sage-50">
+            <i class="fa-regular fa-calendar text-[13px] text-sage-700"></i>
+            <span id="date-label" class="truncate text-[15px] font-semibold text-ink">18 October 2026</span>
+            <span id="today-tag" class="rounded-full bg-sage-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-sage-700">Today</span>
+          </div>
+          <input id="date-input" type="date" aria-label="Pick a date" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+        </div>
+        <button id="next-day" type="button" aria-label="Next day" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-white text-sage-700 shadow-[0_2px_8px_-4px_rgba(47,58,53,0.15)] transition hover:bg-sage-50 active:scale-95 disabled:cursor-not-allowed disabled:text-[#C9CCC8] disabled:shadow-none disabled:hover:bg-white">
+          <i class="fa-solid fa-chevron-right text-[13px]"></i>
+        </button>
+      </section>
+
+      <!-- Day summary (always the whole day, regardless of filter) -->
+      <section id="day-summary" aria-label="Summary of the day" class="mt-3 rounded-2xl border border-line bg-white px-1 py-3 shadow-[0_8px_22px_-20px_rgba(47,58,53,0.45)]">
+        <div id="summary-grid" class="grid grid-cols-4 divide-x divide-line"></div>
+      </section>
+
+      <!-- 3. Filters -->
+      <div id="filters" class="mt-3 grid grid-cols-4 gap-1 rounded-2xl border border-line bg-white p-1" role="tablist" aria-label="Filter records"></div>
+
+      <!-- 4. History table -->
+      <section id="history-table" class="mt-3">
+        <div id="table-wrap" class="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_10px_26px_-22px_rgba(47,58,53,0.45)]">
+          <table class="w-full table-fixed border-collapse">
+            <colgroup><col class="w-[30%]" /><col class="w-[44%]" /><col class="w-[26%]" /></colgroup>
+            <thead class="bg-sage-50">
+              <tr class="text-[11px] font-semibold uppercase tracking-[0.08em] text-sage-700">
+                <th scope="col" class="py-3 pl-4 text-left">Time</th>
+                <th scope="col" class="py-3 text-left">Activity</th>
+                <th scope="col" class="py-3 pr-4 text-right">Details</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-line"></tbody>
+          </table>
+        </div>
+        <p id="table-hint" class="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-muted"><i class="fa-regular fa-hand-pointer text-[11px]"></i>Tap a row to edit</p>
+
+        <!-- 6. Empty state -->
+        <div id="empty-state" class="hidden flex-col items-center rounded-2xl border border-dashed border-sage-200 bg-white/70 px-8 py-10 text-center">
+          <svg width="72" height="68" viewBox="0 0 76 72" fill="none" aria-hidden="true">
+            <rect x="8" y="12" width="60" height="54" rx="12" fill="#F1F6F3" stroke="#A8C5B5" stroke-width="2"/>
+            <path d="M8 26h60" stroke="#A8C5B5" stroke-width="2"/>
+            <rect x="22" y="6" width="4" height="12" rx="2" fill="#7FA592"/><rect x="50" y="6" width="4" height="12" rx="2" fill="#7FA592"/>
+            <circle cx="26" cy="40" r="3" fill="#C9DCD1"/><circle cx="38" cy="40" r="3" fill="#C9DCD1"/><circle cx="50" cy="40" r="3" fill="#C9DCD1"/>
+            <circle cx="26" cy="52" r="3" fill="#C9DCD1"/><circle cx="38" cy="52" r="3" fill="#3C6B59" fill-opacity=".55"/>
+          </svg>
+          <p id="empty-title" class="mt-4 text-[16px] font-semibold text-ink">No activities recorded</p>
+          <p id="empty-text" class="mt-1 max-w-[240px] text-[13px] leading-relaxed text-muted">Your baby's daily records will appear here.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite"
+      class="pointer-events-none absolute inset-x-5 bottom-[100px] z-30 flex translate-y-3 items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3.5 text-white opacity-0 shadow-[0_16px_30px_-12px_rgba(47,58,53,0.6)] transition duration-300">
+      <span class="flex items-center gap-2.5 text-[14px] font-medium"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-sage-300 text-ink"><i class="fa-solid fa-check text-[11px]"></i></span><span id="toast-text">Changes saved</span></span>
+      <button id="toast-undo" type="button" class="hidden rounded-lg px-2 py-1 text-[14px] font-semibold text-sage-300 hover:bg-white/10">Undo</button>
+    </div>
+
+    <!-- 7. Bottom navigation -->
+    <nav id="bottom-nav" aria-label="Main" class="relative z-20 border-t border-line bg-white/95 px-6 pb-6 pt-2 backdrop-blur">
+      <ul class="grid grid-cols-3">
+        <li>
+          <button id="tab-home" type="button" data-navigate="S03-home" class="mx-auto flex flex-col items-center gap-1 text-[#8C948F] hover:text-ink">
+            <span class="flex h-8 w-14 items-center justify-center"><i class="fa-solid fa-house text-[16px]"></i></span>
+            <span class="text-[11px] font-medium">Home</span>
+          </button>
+        </li>
+        <li>
+          <button id="tab-history" type="button" aria-current="page" class="mx-auto flex flex-col items-center gap-1 text-sage-700">
+            <span class="flex h-8 w-14 items-center justify-center rounded-full bg-sage-100"><i class="fa-solid fa-clock-rotate-left text-[16px]"></i></span>
+            <span class="text-[11px] font-semibold">History</span>
+          </button>
+        </li>
+        <li>
+          <button id="tab-baby" type="button" data-navigate="baby-profile" class="mx-auto flex flex-col items-center gap-1 text-[#8C948F] hover:text-ink">
+            <span class="flex h-8 w-14 items-center justify-center"><i class="fa-solid fa-baby text-[16px]"></i></span>
+            <span class="text-[11px] font-medium">Baby</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- 5. Edit Record bottom sheet -->
+    <div id="edit-sheet" class="pointer-events-none absolute inset-0 z-40 opacity-0 transition duration-300" aria-hidden="true">
+      <div id="sheet-backdrop" class="absolute inset-0 bg-ink/35"></div>
+      <div id="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title" class="absolute inset-x-0 bottom-0 translate-y-8 rounded-t-[28px] bg-white px-6 pb-8 pt-3 transition duration-300">
+        <div class="mx-auto h-1.5 w-10 rounded-full bg-line"></div>
+        <div class="mt-4 flex items-center gap-3">
+          <span id="sheet-icon" class="flex h-11 w-11 items-center justify-center rounded-xl"></span>
+          <div class="flex-1">
+            <h3 id="sheet-title" class="font-display text-[21px] font-semibold leading-tight text-ink">Edit Record</h3>
+            <p id="sheet-sub" class="text-[13px] text-muted">Milk · 10:30 AM</p>
+          </div>
+          <button id="sheet-close" type="button" aria-label="Close" class="flex h-10 w-10 items-center justify-center rounded-full bg-cream text-muted hover:text-ink"><i class="fa-solid fa-xmark text-[15px]"></i></button>
+        </div>
+        <div id="sheet-body" class="mt-5 space-y-5"></div>
+        <button id="sheet-save" type="button" class="mt-6 flex h-14 w-full items-center justify-center rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition hover:bg-sage-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-[#BFCFC7] disabled:shadow-none">Save Changes</button>
+        <button id="sheet-delete" type="button" class="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-semibold text-danger transition hover:bg-[#FBF1EE]"><i class="fa-regular fa-trash-can text-[14px]"></i>Delete Record</button>
+      </div>
+    </div>
+
+    <!-- Delete confirmation -->
+    <div id="confirm-dialog" class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center px-8 opacity-0 transition duration-200" aria-hidden="true">
+      <div id="confirm-backdrop" class="absolute inset-0 bg-ink/40"></div>
+      <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" class="relative w-full max-w-[320px] rounded-3xl bg-white p-6 text-center shadow-[0_30px_60px_-20px_rgba(47,58,53,0.5)]">
+        <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FBF1EE] text-danger"><i class="fa-regular fa-trash-can text-[17px]"></i></span>
+        <h4 id="confirm-title" class="mt-3 font-display text-[20px] font-semibold text-ink">Delete this record?</h4>
+        <p id="confirm-text" class="mt-1 text-[13px] text-muted">Milk · 120 ml at 10:30 AM</p>
+        <div class="mt-5 grid grid-cols-2 gap-2.5">
+          <button id="confirm-cancel" type="button" class="h-12 rounded-2xl border border-line bg-white text-[15px] font-semibold text-ink hover:bg-cream">Cancel</button>
+          <button id="confirm-delete" type="button" class="h-12 rounded-2xl bg-danger text-[15px] font-semibold text-white hover:brightness-95">Delete</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const pad = n => String(n).padStart(2, '0');
+      const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const toLocal = d => `${ymd(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      const timeLabel = d => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const at = (off, h, m) => { const d = new Date(today); d.setDate(d.getDate() - off); d.setHours(h, m, 0, 0); return d; };
+
+      // Formula-only MVP records. Diaper: pee / poop / both (one row for combined)
+      let uid = 0;
+      const R = (t, type, extra = {}) => ({ id: ++uid, t, type, ...extra });
+      let records = [
+        R(at(0, 10, 30), 'milk', { ml: 120 }),
+        R(at(0, 9, 45), 'pee'),
+        R(at(0, 8, 30), 'bath'),
+        R(at(0, 7, 15), 'milk', { ml: 100 }),
+        R(at(0, 6, 30), 'both'),
+        R(at(0, 4, 10), 'milk', { ml: 100 }),
+        R(at(0, 3, 20), 'pee'),
+        R(at(0, 1, 40), 'milk', { ml: 100 }),
+        R(at(0, 0, 35), 'pee'),
+        R(at(1, 21, 50), 'milk', { ml: 110 }),
+        R(at(1, 19, 0), 'pee'),
+        R(at(1, 17, 30), 'milk', { ml: 120 }),
+        R(at(1, 14, 5), 'poop'),
+        R(at(1, 12, 40), 'milk', { ml: 120 }),
+        R(at(1, 9, 20), 'both')
+      ];
+
+      let selected = new Date(today);
+      let filter = 'all';
+
+      const BOTTLE = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 2.5h3v2.2h-3z"/><rect x="7" y="4.7" width="10" height="2.6" rx="1.3"/><path d="M8 7.3h8v11.6a2.6 2.6 0 0 1-2.6 2.6h-2.8A2.6 2.6 0 0 1 8 18.9z"/></svg>`;
+      const DIAPER = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6h17v3.6c0 4.9-3.8 8.9-8.5 8.9s-8.5-4-8.5-8.9z"/><path d="M3.5 9.5h17M7.5 9.5v2.4M16.5 9.5v2.4"/></svg>`;
+
+      const META = {
+        milk: { name: 'Milk', group: 'milk', tint: 'bg-sage-100 text-sage-700', icon: s => BOTTLE(s) },
+        pee:  { name: 'Pee', group: 'diaper', tint: 'bg-sky-soft text-sky-ink', icon: s => `<i class="fa-solid fa-droplet" style="font-size:${s * 0.7}px"></i>` },
+        poop: { name: 'Poop', group: 'diaper', tint: 'bg-sand-soft text-sand-ink', icon: s => DIAPER(s) },
+        both: { name: 'Pee & Poop', group: 'diaper', tint: 'bg-sand-soft text-sand-ink', icon: s => `<span class="flex items-center gap-[2px]"><i class="fa-solid fa-droplet text-sky-ink" style="font-size:${Math.round(s * 0.55)}px"></i>${DIAPER(Math.round(s * 0.85))}</span>` },
+        bath: { name: 'Bath', group: 'bath', tint: 'bg-lilac-soft text-lilac-ink', icon: s => `<i class="fa-solid fa-bath" style="font-size:${s * 0.7}px"></i>` }
+      };
+      const FILTERS = [['all', 'All'], ['milk', 'Milk'], ['diaper', 'Diaper'], ['bath', 'Bath']];
+
+      const dayRecords = () => records.filter(r => ymd(r.t) === ymd(selected)).sort((a, b) => b.t - a.t);
+
+      function renderDate() {
+        const isToday = ymd(selected) === ymd(today);
+        $('date-label').textContent = selected.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        $('today-tag').classList.toggle('hidden', !isToday);
+        $('next-day').disabled = isToday;
+        $('date-input').max = ymd(today);
+        $('date-input').value = ymd(selected);
+      }
+
+      function renderFilters() {
+        $('filters').innerHTML = FILTERS.map(([k, l]) => {
+          const on = k === filter;
+          return `<button type="button" role="tab" aria-selected="${on}" data-filter="${k}" class="filter h-10 rounded-xl text-[14px] font-semibold transition ${on ? 'bg-sage-100 text-sage-700' : 'text-muted hover:text-ink'}">${l}</button>`;
+        }).join('');
+      }
+
+      function renderSummary(all) {
+        const milk = all.filter(r => r.type === 'milk');
+        const ml = milk.reduce((s, r) => s + r.ml, 0);
+        const pee = all.filter(r => r.type === 'pee' || r.type === 'both').length;
+        const poop = all.filter(r => r.type === 'poop' || r.type === 'both').length;
+        const bath = all.filter(r => r.type === 'bath').length;
+        const cell = (icon, tint, value, unit, label) => `
+          <div class="flex flex-col items-center px-1 text-center">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg ${tint}">${icon}</span>
+            <p class="mt-1.5 leading-none"><span class="font-display text-[19px] font-semibold text-ink">${value}</span>${unit ? `<span class="ml-0.5 text-[11px] font-semibold text-muted">${unit}</span>` : ''}</p>
+            <p class="mt-1 whitespace-nowrap text-[11px] font-medium text-muted">${label}</p>
+          </div>`;
+        $('summary-grid').innerHTML =
+          cell(META.milk.icon(14), META.milk.tint, ml, 'ml', `Milk · ${milk.length} ${milk.length === 1 ? 'feed' : 'feeds'}`) +
+          cell(META.pee.icon(16), META.pee.tint, pee, '', 'Pee') +
+          cell(META.poop.icon(15), META.poop.tint, poop, '', 'Poop') +
+          cell(META.bath.icon(16), META.bath.tint, bath, '', bath === 1 ? 'Bath' : 'Baths');
+      }
+
+      function renderTable() {
+        const all = dayRecords();
+        renderSummary(all);
+        const rows = filter === 'all' ? all : all.filter(r => META[r.type].group === filter);
+        const has = rows.length > 0;
+        $('table-wrap').classList.toggle('hidden', !has);
+        $('table-hint').classList.toggle('hidden', !has);
+        $('empty-state').classList.toggle('hidden', has);
+        $('empty-state').classList.toggle('flex', !has);
+        if (!has) {
+          const label = { milk: 'milk', diaper: 'diaper', bath: 'bath' }[filter];
+          $('empty-title').textContent = all.length && label ? `No ${label} records on this day` : 'No activities recorded';
+          $('empty-text').textContent = all.length && label ? 'Try another filter or pick a different date.' : "Your baby's daily records will appear here.";
+        }
+        $('table-body').innerHTML = rows.map((r, i) => {
+          const m = META[r.type];
+          return `<tr data-id="${r.id}" tabindex="0" role="button" aria-label="Edit ${m.name} at ${timeLabel(r.t)}"
+              class="row h-[52px] cursor-pointer transition hover:bg-sage-50 focus:bg-sage-50 focus:outline-none active:bg-sage-100 ${i % 2 ? 'bg-cream/60' : 'bg-white'}">
+            <td class="pl-4 text-[14px] font-medium tabular-nums text-muted">${timeLabel(r.t)}</td>
+            <td class="pr-2">
+              <span class="flex items-center gap-2.5">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${m.tint}">${m.icon(15)}</span>
+                <span class="truncate text-[14px] font-semibold text-ink">${m.name}</span>
+              </span>
+            </td>
+            <td class="pr-4 text-right text-[14px] font-semibold ${r.ml ? 'text-sage-700' : 'text-[#B5BBB7]'}">${r.ml ? r.ml + ' ml' : '—'}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      const render = () => { renderDate(); renderFilters(); renderTable(); };
+
+      $('prev-day').addEventListener('click', () => { selected.setDate(selected.getDate() - 1); render(); });
+      $('next-day').addEventListener('click', () => { if (ymd(selected) < ymd(today)) { selected.setDate(selected.getDate() + 1); render(); } });
+      $('date-input').addEventListener('change', e => {
+        if (!e.target.value) return;
+        const [y, mo, d] = e.target.value.split('-').map(Number);
+        const pick = new Date(y, mo - 1, d);
+        selected = pick > today ? new Date(today) : pick;
+        render();
+      });
+      $('filters').addEventListener('click', e => {
+        const b = e.target.closest('.filter'); if (!b) return;
+        filter = b.dataset.filter; renderFilters(); renderTable();
+      });
+
+      // ---------- Edit Record sheet ----------
+      let editing = null, draft = null;
+
+      function fmtFull(d) {
+        const diff = Math.round((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+        const day = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        return `${day}, ${timeLabel(d)}`;
+      }
+      const label = t => `<p class="mb-2 text-[13px] font-semibold text-ink">${t}</p>`;
+      const timeField = () => `<div>${label('Date & Time')}<div class="relative"><div class="flex h-14 items-center gap-3 rounded-2xl border border-line bg-white px-4"><span class="flex h-8 w-8 items-center justify-center rounded-full bg-sage-50 text-sage-700"><i class="fa-regular fa-clock text-[13px]"></i></span><span id="draft-time-label" class="flex-1 text-[15px] font-semibold text-ink">${fmtFull(draft.t)}</span><span class="text-[13px] font-semibold text-sage-700">Change</span></div><input id="draft-time" type="datetime-local" value="${toLocal(draft.t)}" max="${toLocal(new Date())}" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" aria-label="Date and time" /></div></div>`;
+
+      function renderSheet() {
+        const m = META[draft.type];
+        $('sheet-icon').className = `flex h-11 w-11 items-center justify-center rounded-xl ${m.tint}`;
+        $('sheet-icon').innerHTML = m.icon(20);
+        $('sheet-sub').textContent = `${m.name} · ${fmtFull(editing.t)}`;
+        let html = '';
+        if (draft.type === 'milk') {
+          html += `<div>${label('Amount consumed')}<div class="flex h-16 items-center justify-between rounded-2xl border border-line bg-white px-2">
+            <button type="button" data-step="-10" aria-label="Decrease by 10 ml" class="flex h-12 w-12 items-center justify-center rounded-xl bg-sage-50 text-sage-700 active:scale-95"><i class="fa-solid fa-minus text-[14px]"></i></button>
+            <span class="flex items-baseline gap-1"><input id="draft-ml" type="text" inputmode="numeric" maxlength="3" value="${draft.ml}" class="w-20 bg-transparent text-right font-display text-[30px] font-semibold text-ink focus:outline-none" aria-label="Amount in ml" /><span class="text-[14px] font-semibold text-muted">ml</span></span>
+            <button type="button" data-step="10" aria-label="Increase by 10 ml" class="flex h-12 w-12 items-center justify-center rounded-xl bg-sage-700 text-white active:scale-95"><i class="fa-solid fa-plus text-[14px]"></i></button>
+          </div></div>`;
+        } else if (m.group === 'diaper') {
+          const opts = [['pee', 'Pee'], ['poop', 'Poop'], ['both', 'Both']];
+          html += `<div>${label('Diaper')}<div class="grid grid-cols-3 gap-1 rounded-2xl bg-cream p-1 ring-1 ring-line">${opts.map(([v, l]) => {
+            const on = draft.type === v;
+            return `<button type="button" data-diaper="${v}" class="flex h-12 items-center justify-center gap-1.5 rounded-xl text-[14px] font-semibold transition ${on ? 'bg-white text-sage-700 shadow-[0_2px_8px_-3px_rgba(47,58,53,0.25)] ring-1 ring-sage-300' : 'text-muted hover:text-ink'}">${on ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}${l}</button>`;
+          }).join('')}</div></div>`;
+        }
+        html += timeField();
+        $('sheet-body').innerHTML = html;
+        validate();
+      }
+      function validate() {
+        $('sheet-save').disabled = draft && draft.type === 'milk' && !(draft.ml >= 5 && draft.ml <= 400);
+      }
+
+      $('sheet-body').addEventListener('click', e => {
+        const st = e.target.closest('[data-step]');
+        if (st) { draft.ml = Math.max(5, Math.min(400, (draft.ml || 0) + Number(st.dataset.step))); $('draft-ml').value = draft.ml; validate(); return; }
+        const dp = e.target.closest('[data-diaper]');
+        if (dp) { draft.type = dp.dataset.diaper; renderSheet(); }
+      });
+      $('sheet-body').addEventListener('input', e => {
+        if (e.target.id !== 'draft-ml') return;
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+        draft.ml = parseInt(e.target.value, 10) || 0; validate();
+      });
+      $('sheet-body').addEventListener('change', e => {
+        if (e.target.id !== 'draft-time' || !e.target.value) return;
+        let d = new Date(e.target.value); const n = new Date(); if (d > n) d = n;
+        draft.t = d; e.target.value = toLocal(d); $('draft-time-label').textContent = fmtFull(d);
+      });
+
+      const sheet = $('edit-sheet'), panel = $('sheet-panel');
+      function openSheet(open) {
+        sheet.classList.toggle('opacity-0', !open); sheet.classList.toggle('pointer-events-none', !open);
+        panel.classList.toggle('translate-y-8', !open); sheet.setAttribute('aria-hidden', !open);
+      }
+      function openRow(id) {
+        editing = records.find(r => r.id === id);
+        draft = { ...editing, t: new Date(editing.t) };
+        renderSheet(); openSheet(true);
+      }
+      $('table-body').addEventListener('click', e => { const tr = e.target.closest('.row'); if (tr) openRow(+tr.dataset.id); });
+      $('table-body').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('row')) { e.preventDefault(); openRow(+e.target.dataset.id); } });
+      $('sheet-close').addEventListener('click', () => openSheet(false));
+      $('sheet-backdrop').addEventListener('click', () => openSheet(false));
+
+      // Save updates the same record in place — no duplicates
+      $('sheet-save').addEventListener('click', () => {
+        if (!editing || $('sheet-save').disabled) return;
+        editing.type = draft.type; editing.t = draft.t;
+        if (draft.type === 'milk') editing.ml = draft.ml; else delete editing.ml;
+        openSheet(false);
+        selected = new Date(draft.t.getFullYear(), draft.t.getMonth(), draft.t.getDate());
+        render(); toast('Changes saved', false);
+      });
+
+      // Delete with confirmation
+      const dlg = $('confirm-dialog');
+      const openConfirm = o => { dlg.classList.toggle('opacity-0', !o); dlg.classList.toggle('pointer-events-none', !o); dlg.setAttribute('aria-hidden', !o); };
+      $('sheet-delete').addEventListener('click', () => {
+        const m = META[editing.type];
+        $('confirm-text').textContent = `${m.name}${editing.ml ? ' · ' + editing.ml + ' ml' : ''} at ${timeLabel(editing.t)}`;
+        openConfirm(true);
+      });
+      $('confirm-cancel').addEventListener('click', () => openConfirm(false));
+      $('confirm-backdrop').addEventListener('click', () => openConfirm(false));
+      let lastDeleted = null;
+      $('confirm-delete').addEventListener('click', () => {
+        lastDeleted = editing;
+        records = records.filter(r => r !== editing);
+        openConfirm(false); openSheet(false); renderTable();
+        toast('Record deleted', true);
+      });
+
+      let tt;
+      function toast(text, undo) {
+        $('toast-text').textContent = text;
+        $('toast-undo').classList.toggle('hidden', !undo);
+        const t = $('toast'); t.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+        clearTimeout(tt); tt = setTimeout(() => { t.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none'); lastDeleted = null; }, 4500);
+      }
+      $('toast-undo').addEventListener('click', () => {
+        if (lastDeleted) { records.push(lastDeleted); lastDeleted = null; renderTable(); }
+        $('toast').classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

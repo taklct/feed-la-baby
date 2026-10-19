@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            sky: { soft: '#E6EFF4', ink: '#41708C' },
+            sand: { soft: '#F4ECE2', ink: '#86654A' },
+            lilac: { soft: '#ECEAF4', ink: '#5E5A86' },
+            cream: '#FAF9F6',
+            line: '#ECEAE5',
+            ink: '#2F3A35',
+            muted: '#6B746F'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    #home-scroll::-webkit-scrollbar { display: none; }
+    #home-scroll { scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="home-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <div aria-hidden="true" class="pointer-events-none absolute -top-32 -left-24 h-[300px] w-[300px] rounded-full bg-sage-100/70 blur-3xl"></div>
+
+    <!-- Scrollable content -->
+    <div id="home-scroll" class="relative z-10 flex-1 overflow-y-auto px-5 pb-8">
+
+      <!-- 1. Header -->
+      <header id="header" class="flex items-center justify-between pt-10">
+        <div>
+          <p id="greeting" class="text-[14px] font-medium text-muted">Good morning <i class="fa-solid fa-sun ml-0.5 text-[13px] text-[#E0A63B]"></i></p>
+          <h1 id="baby-name" class="mt-0.5 font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink">Emma</h1>
+          <p id="baby-meta" class="mt-0.5 text-[13px] font-medium text-muted">2 months old <span class="mx-1 text-sage-300">·</span> 5.0 kg</p>
+        </div>
+        <button id="baby-avatar" type="button" data-navigate="baby-profile" aria-label="Emma's profile" class="h-[52px] w-[52px] shrink-0 rounded-full bg-white p-[3px] shadow-[0_6px_16px_-8px_rgba(60,107,89,0.45)] ring-1 ring-sage-200">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_86232bfb8e_f1696934be8883bd.png" alt="Emma" class="h-full w-full rounded-full bg-sage-50 object-cover" />
+        </button>
+      </header>
+
+      <!-- 2. Feeding guidance -->
+      <section id="feeding-guide" class="relative mt-4 overflow-hidden rounded-2xl border border-sage-200 bg-gradient-to-br from-sage-100 via-sage-50 to-white p-4 shadow-[0_14px_30px_-22px_rgba(60,107,89,0.55)]">
+        <div aria-hidden="true" class="absolute -right-12 -top-14 h-36 w-36 rounded-full bg-sage-300/15"></div>
+        <div class="relative flex items-center gap-2.5">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-sage-700 shadow-sm">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5h3v2.2h-3z"/><rect x="7" y="4.7" width="10" height="2.6" rx="1.3"/><path d="M8 7.3h8v11.6a2.6 2.6 0 0 1-2.6 2.6h-2.8A2.6 2.6 0 0 1 8 18.9z"/><path d="M8 13h3M8 16h2"/></svg>
+          </span>
+          <h2 id="guide-title" class="text-[15px] font-semibold text-sage-700">Emma's Feeding Guide</h2>
+        </div>
+        <p id="guide-label" class="relative mt-3.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Daily Milk Reference</p>
+        <div class="relative mt-1 flex items-end gap-2">
+          <span id="guide-value" class="font-display text-[38px] font-semibold leading-none tracking-[-0.02em] text-sage-700">~830</span>
+          <span id="guide-unit" class="pb-1 text-[16px] font-semibold text-sage-700/80">ml/day</span>
+        </div>
+        <p id="guide-text" class="relative mt-2 text-[13px] leading-[1.5] text-ink/80">General formula reference based on Emma's age and weight.</p>
+        <p class="relative mt-2 flex items-center gap-1.5 text-[12px] text-muted"><i class="fa-regular fa-heart text-[11px] text-sage-600"></i>Follow your baby's hunger and fullness cues.</p>
+      </section>
+
+      <!-- 3. Expected next feed -->
+      <section id="next-feed" class="mt-3 flex items-center gap-3.5 rounded-2xl border border-line bg-white px-4 py-3.5 shadow-[0_8px_22px_-18px_rgba(47,58,53,0.4)]">
+        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sage-50 text-sage-700"><i class="fa-regular fa-clock text-[20px]"></i></span>
+        <div class="min-w-0 flex-1">
+          <p class="text-[12px] font-semibold text-muted">Expected Next Feed</p>
+          <p id="next-feed-time" class="mt-0.5 font-display text-[22px] font-semibold leading-tight text-sage-700">Around 1:30 PM</p>
+          <p id="next-feed-last" class="mt-0.5 text-[12px] text-muted">Last fed at 10:30 AM · Based on Emma's recent feeding pattern.</p>
+        </div>
+      </section>
+
+      <!-- 4. Today's overview -->
+      <section id="today-overview" class="mt-4">
+        <h2 class="font-display text-[19px] font-semibold tracking-[-0.01em] text-ink">Today's Overview</h2>
+        <div id="overview-grid" class="mt-3 grid grid-cols-2 gap-2.5">
+          <div id="stat-milk" class="relative rounded-2xl border border-line bg-white p-3">
+            <span class="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-sage-100 text-sage-700">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5h3v2.2h-3z"/><rect x="7" y="4.7" width="10" height="2.6" rx="1.3"/><path d="M8 7.3h8v11.6a2.6 2.6 0 0 1-2.6 2.6h-2.8A2.6 2.6 0 0 1 8 18.9z"/></svg>
+            </span>
+            <p class="leading-none"><span id="milk-total" class="font-display text-[22px] font-semibold text-ink">420</span><span class="ml-0.5 text-[12px] font-semibold text-muted">ml</span></p>
+            <p class="mt-1.5 whitespace-nowrap text-[12px] font-medium text-muted">Milk Consumed <span class="text-sage-300">·</span> <span id="milk-feeds" class="font-semibold text-sage-700">4 feeds</span></p>
+          </div>
+          <div id="stat-pee" class="relative rounded-2xl border border-line bg-white p-3">
+            <span class="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-sky-soft text-sky-ink"><i class="fa-solid fa-droplet text-[12px]"></i></span>
+            <p id="pee-total" class="font-display text-[22px] font-semibold leading-none text-ink">4</p>
+            <p class="mt-1.5 text-[12px] font-medium text-muted">Pee</p>
+          </div>
+          <div id="stat-poop" class="relative rounded-2xl border border-line bg-white p-3">
+            <span class="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-sand-soft text-sand-ink">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6h17v3.6c0 4.9-3.8 8.9-8.5 8.9s-8.5-4-8.5-8.9z"/><path d="M3.5 9.5h17M7.5 9.5v2.4M16.5 9.5v2.4"/></svg>
+            </span>
+            <p id="poop-total" class="font-display text-[22px] font-semibold leading-none text-ink">1</p>
+            <p class="mt-1.5 text-[12px] font-medium text-muted">Poop</p>
+          </div>
+          <div id="stat-bath" class="relative rounded-2xl border border-line bg-white p-3">
+            <span class="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-lilac-soft text-lilac-ink"><i class="fa-solid fa-bath text-[12px]"></i></span>
+            <p id="bath-day" class="font-display text-[19px] font-semibold leading-[22px] text-ink">Yesterday</p>
+            <p class="mt-1.5 whitespace-nowrap text-[12px] font-medium text-muted">Last Bath <span class="text-sage-300">·</span> <span id="bath-time" class="font-semibold text-lilac-ink">7:00 PM</span></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Primary action -->
+      <button id="add-record-btn" type="button" data-navigate="S04-add-record"
+        class="mt-3.5 flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70">
+        <i class="fa-solid fa-plus text-[15px]"></i>Add Record
+      </button>
+
+      <!-- 6. Recent activities -->
+      <section id="recent-activities" class="mt-7">
+        <div class="flex items-baseline justify-between">
+          <h2 class="font-display text-[19px] font-semibold tracking-[-0.01em] text-ink">Recent Activities</h2>
+          <button id="view-all" type="button" data-navigate="S05-history" class="flex items-center gap-1 text-[13px] font-semibold text-sage-700 underline-offset-4 hover:underline">View All <i class="fa-solid fa-arrow-right text-[11px]"></i></button>
+        </div>
+        <ul id="activity-list" class="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white"></ul>
+
+        <div id="activity-empty" class="mt-3 hidden flex-col items-center rounded-2xl border border-dashed border-sage-200 bg-white/70 px-6 py-7 text-center">
+          <span class="flex h-12 w-12 items-center justify-center rounded-full bg-sage-50 text-sage-700"><i class="fa-regular fa-heart text-[18px]"></i></span>
+          <p class="mt-3 text-[15px] font-semibold text-ink">A fresh new day with Emma</p>
+          <p class="mt-1 text-[13px] leading-relaxed text-muted">Tap Add Record to log her first feed, diaper or bath.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- 7. Bottom navigation -->
+    <nav id="bottom-nav" aria-label="Main" class="relative z-20 border-t border-line bg-white/95 px-6 pb-6 pt-2 backdrop-blur">
+      <ul class="grid grid-cols-3">
+        <li>
+          <button id="tab-home" type="button" aria-current="page" class="mx-auto flex flex-col items-center gap-1 text-sage-700">
+            <span class="flex h-8 w-14 items-center justify-center rounded-full bg-sage-100"><i class="fa-solid fa-house text-[16px]"></i></span>
+            <span class="text-[11px] font-semibold">Home</span>
+          </button>
+        </li>
+        <li>
+          <button id="tab-history" type="button" data-navigate="S05-history" class="mx-auto flex flex-col items-center gap-1 text-[#8C948F] hover:text-ink">
+            <span class="flex h-8 w-14 items-center justify-center"><i class="fa-solid fa-clock-rotate-left text-[16px]"></i></span>
+            <span class="text-[11px] font-medium">History</span>
+          </button>
+        </li>
+        <li>
+          <button id="tab-baby" type="button" data-navigate="baby-profile" class="mx-auto flex flex-col items-center gap-1 text-[#8C948F] hover:text-ink">
+            <span class="flex h-8 w-14 items-center justify-center"><i class="fa-solid fa-baby text-[16px]"></i></span>
+            <span class="text-[11px] font-medium">Baby</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+
+      // Saved baby profile (from Baby Setup). Numeric guidance only when eligible.
+      const baby = { name: 'Emma', ageDays: 61, weightKg: 5.0, premature: 'no', doctorPlan: 'no' };
+
+      // Records (formula-only MVP). t = minutes from today's midnight; negative = yesterday.
+      const at = (h, m) => h * 60 + m;
+      const records = [
+        { t: at(10, 30), type: 'milk', ml: 120 },
+        { t: at(9, 45), type: 'pee' },
+        { t: at(7, 15), type: 'milk', ml: 100 },
+        { t: at(6, 30), type: 'pee' },
+        { t: at(6, 30), type: 'poop' },
+        { t: at(4, 10), type: 'milk', ml: 100 },
+        { t: at(3, 20), type: 'pee' },
+        { t: at(1, 40), type: 'milk', ml: 100 },
+        { t: at(0, 35), type: 'pee' },
+        { t: at(8, 30), type: 'bath' }
+      ];
+
+      const fmt = mins => {
+        const m = ((mins % 1440) + 1440) % 1440;
+        const h = Math.floor(m / 60), mm = m % 60;
+        return `${h % 12 || 12}:${String(mm).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+      };
+      const dayLabel = mins => mins >= 0 ? 'Today' : mins >= -1440 ? 'Yesterday' : `${Math.ceil(-mins / 1440)} days ago`;
+
+      // Greeting by time of day
+      const hr = new Date().getHours();
+      const g = hr < 12 ? ['Good morning', 'fa-sun', 'text-[#E0A63B]'] : hr < 18 ? ['Good afternoon', 'fa-cloud-sun', 'text-[#E0A63B]'] : ['Good evening', 'fa-moon', 'text-[#8B87B5]'];
+      $('greeting').innerHTML = `${g[0]} <i class="fa-solid ${g[1]} ${g[2]} ml-0.5 text-[13px]"></i>`;
+
+      // Feeding guide
+      function renderGuide() {
+        const months = Math.floor(baby.ageDays / 30.4);
+        $('baby-meta').innerHTML = `${months < 1 ? Math.floor(baby.ageDays / 7) + ' weeks' : months + (months === 1 ? ' month' : ' months')} old` +
+          (baby.weightKg ? ` <span class="mx-1 text-sage-300">·</span> ${baby.weightKg.toFixed(1)} kg` : '');
+        const eligible = baby.weightKg && baby.premature === 'no' && baby.doctorPlan === 'no';
+        if (eligible) {
+          const ml = Math.round(Math.min(baby.weightKg * 165, 1000) / 10) * 10;
+          $('guide-label').textContent = 'Daily Milk Reference';
+          $('guide-value').textContent = '~' + ml;
+          $('guide-unit').textContent = 'ml/day';
+          $('guide-text').textContent = `General formula reference based on ${baby.name}'s age and weight.`;
+        } else {
+          $('guide-label').textContent = 'General Feeding Guidance';
+          $('guide-value').textContent = 'Every 2–4 hrs';
+          $('guide-value').classList.replace('text-[38px]', 'text-[30px]');
+          $('guide-unit').textContent = '';
+          $('guide-text').textContent = baby.doctorPlan === 'yes'
+            ? `Follow the feeding plan from ${baby.name}'s doctor.`
+            : `Typical rhythm at this age. Add ${baby.name}'s weight in her profile for a personalized reference.`;
+        }
+      }
+
+      // Expected next feed — average interval of recent feeds, rounded to 15 min
+      function renderNextFeed() {
+        const feeds = records.filter(r => r.type === 'milk').sort((a, b) => b.t - a.t);
+        const time = $('next-feed-time'), sub = $('next-feed-last');
+        if (baby.ageDays < 28) { time.textContent = 'Feed on cue'; sub.textContent = 'Next-feed estimates start once your baby is 4 weeks old.'; return; }
+        if (feeds.length < 3) { time.textContent = 'Not enough feeding history yet'; time.classList.replace('text-[22px]', 'text-[16px]'); sub.textContent = 'Log a few more feeds to see an estimate.'; return; }
+        const recent = feeds.slice(0, 4);
+        const gaps = recent.slice(0, -1).map((f, i) => f.t - recent[i + 1].t);
+        const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+        const next = Math.round((recent[0].t + avg) / 15) * 15;
+        time.textContent = `Around ${fmt(next)}`;
+        sub.textContent = `Last fed at ${fmt(recent[0].t)} · Based on ${baby.name}'s recent feeding pattern.`;
+      }
+
+      function renderOverview() {
+        const today = records.filter(r => r.t >= 0);
+        const milk = today.filter(r => r.type === 'milk');
+        $('milk-total').textContent = milk.reduce((s, r) => s + r.ml, 0);
+        $('milk-feeds').textContent = `${milk.length} ${milk.length === 1 ? 'feed' : 'feeds'}`;
+        $('pee-total').textContent = today.filter(r => r.type === 'pee').length;
+        $('poop-total').textContent = today.filter(r => r.type === 'poop').length;
+        const bath = records.filter(r => r.type === 'bath').sort((a, b) => b.t - a.t)[0];
+        $('bath-day').textContent = bath ? dayLabel(bath.t) : 'None yet';
+        $('bath-time').textContent = bath ? fmt(bath.t) : '—';
+      }
+
+      const META = {
+        milk: { name: 'Milk', tint: 'bg-sage-100 text-sage-700', icon: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 2.5h3v2.2h-3z"/><rect x="7" y="4.7" width="10" height="2.6" rx="1.3"/><path d="M8 7.3h8v11.6a2.6 2.6 0 0 1-2.6 2.6h-2.8A2.6 2.6 0 0 1 8 18.9z"/></svg>' },
+        pee:  { name: 'Pee', tint: 'bg-sky-soft text-sky-ink', icon: '<i class="fa-solid fa-droplet text-[13px]"></i>' },
+        poop: { name: 'Poop', tint: 'bg-sand-soft text-sand-ink', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6h17v3.6c0 4.9-3.8 8.9-8.5 8.9s-8.5-4-8.5-8.9z"/><path d="M3.5 9.5h17M7.5 9.5v2.4M16.5 9.5v2.4"/></svg>' },
+        bath: { name: 'Bath', tint: 'bg-lilac-soft text-lilac-ink', icon: '<i class="fa-solid fa-bath text-[13px]"></i>' }
+      };
+
+      function renderRecent() {
+        const latest = [...records].sort((a, b) => b.t - a.t).slice(0, 3);
+        const list = $('activity-list'), empty = $('activity-empty');
+        list.classList.toggle('hidden', !latest.length);
+        empty.classList.toggle('hidden', !!latest.length);
+        empty.classList.toggle('flex', !latest.length);
+        list.innerHTML = latest.map(r => {
+          const m = META[r.type];
+          return `<li class="flex items-center gap-3 px-4 py-3.5">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${m.tint}">${m.icon}</span>
+            <span class="flex-1 text-[14px] font-semibold text-ink">${m.name}${r.ml ? `<span class="font-medium text-muted"> · ${r.ml} ml</span>` : ''}</span>
+            <span class="text-[13px] font-medium text-muted">${r.t < 0 ? 'Yesterday, ' : ''}${fmt(r.t)}</span>
+          </li>`;
+        }).join('');
+      }
+
+      renderGuide(); renderNextFeed(); renderOverview(); renderRecent();
+    })();
+  </script>
+</body>
+</html>

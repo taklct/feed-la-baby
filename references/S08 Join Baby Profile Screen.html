@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join Baby Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            cream: '#FAF9F6',
+            line: '#E3E1DC',
+            ink: '#2F3A35',
+            muted: '#6B746F',
+            warm: '#A0603F'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    #join-scroll::-webkit-scrollbar { display: none; }
+    #join-scroll { scrollbar-width: none; }
+    .shake { animation: shake .35s ease; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  </style>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="join-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <div aria-hidden="true" class="pointer-events-none absolute -top-28 left-1/2 h-[320px] w-[360px] -translate-x-1/2 rounded-full bg-sage-100/70 blur-3xl"></div>
+
+    <!-- 1. Header -->
+    <header id="header" class="relative z-10 grid grid-cols-[44px_1fr_44px] items-center px-5 pt-14">
+      <button id="back-btn" type="button" data-navigate="S01-welcome" aria-label="Go back"
+        class="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-ink shadow-[0_2px_8px_-4px_rgba(47,58,53,0.15)] transition hover:bg-sage-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/60">
+        <i class="fa-solid fa-arrow-left text-[15px]"></i>
+      </button>
+      <h1 class="text-center font-display text-[20px] font-semibold tracking-[-0.01em] text-ink">Join Baby Profile</h1>
+      <span aria-hidden="true"></span>
+    </header>
+
+    <div id="join-scroll" class="relative z-10 flex-1 overflow-y-auto px-6 pb-6">
+
+      <!-- 2. Welcome illustration -->
+      <section id="welcome" class="mt-5 flex flex-col items-center text-center">
+        <div class="relative h-[176px] w-[248px] overflow-hidden rounded-[28px] bg-sage-50 shadow-[0_16px_34px_-24px_rgba(60,107,89,0.5)] ring-4 ring-white">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_16d94af124_48931cce9c96adb5.png" alt="Two caregivers smiling together while holding a baby" class="h-full w-full object-cover" />
+        </div>
+        <h2 class="mt-5 font-display text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink">Caring is better together</h2>
+        <p class="mt-2 max-w-[300px] text-[15px] leading-[1.55] text-muted">Enter the invitation code shared with you to help care for a baby.</p>
+      </section>
+
+      <!-- 3. Invitation code -->
+      <section id="code-section" class="mt-7">
+        <p id="code-label" class="text-[14px] font-semibold text-ink">Invitation Code</p>
+        <div id="code-boxes" role="group" aria-labelledby="code-label" class="mt-3 flex justify-between gap-2"></div>
+        <p id="code-help" class="mt-3 flex items-center gap-1.5 text-[13px] text-muted"><i class="fa-regular fa-circle-question text-[12px] text-sage-600"></i>Ask the profile owner for their 6-character invitation code.</p>
+        <p id="code-error" role="alert" class="mt-3 hidden items-start gap-2 rounded-xl bg-[#FBF2EC] px-3 py-2.5 text-[13px] leading-snug text-warm"><i class="fa-solid fa-circle-info mt-0.5 text-[12px]"></i><span id="code-error-text"></span></p>
+      </section>
+    </div>
+
+    <!-- 4 & 7. Actions (stay visible above the keyboard) -->
+    <footer id="footer" class="relative z-20 px-6 pb-8 pt-3">
+      <button id="join-btn" type="button"
+        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BFCFC7] disabled:shadow-none disabled:active:scale-100">
+        <span id="join-label">Join Profile</span><i id="join-icon" class="fa-solid fa-arrow-right text-[15px]"></i>
+      </button>
+      <button id="create-link" type="button" data-navigate="S02-baby-setup" class="mx-auto mt-3.5 block text-[14px] font-semibold text-sage-700 underline-offset-4 hover:underline">Create a new baby profile instead</button>
+    </footer>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite"
+      class="pointer-events-none absolute inset-x-6 bottom-[128px] z-[60] flex translate-y-3 items-center gap-2.5 rounded-2xl bg-ink px-4 py-3.5 text-[14px] font-medium text-white opacity-0 shadow-[0_16px_30px_-12px_rgba(47,58,53,0.6)] transition duration-300">
+      <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sage-300 text-ink"><i class="fa-solid fa-check text-[11px]"></i></span><span id="toast-text">You've joined Emma's profile</span>
+    </div>
+
+    <!-- Lightweight sign-in sheet -->
+    <div id="signin-sheet" class="pointer-events-none absolute inset-0 z-40 opacity-0 transition duration-300" aria-hidden="true">
+      <div data-close="signin-sheet" class="absolute inset-0 bg-ink/35"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="signin-title" class="sheet-panel absolute inset-x-0 bottom-0 translate-y-8 rounded-t-[28px] bg-white px-6 pb-8 pt-3 transition duration-300">
+        <div class="mx-auto h-1.5 w-10 rounded-full bg-line"></div>
+        <span class="mt-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-sage-50 text-sage-700"><i class="fa-solid fa-lock text-[17px]"></i></span>
+        <h3 id="signin-title" class="mt-3 font-display text-[22px] font-semibold text-ink">Sign in to continue</h3>
+        <p class="mt-1 text-[14px] leading-relaxed text-muted">Your invitation is valid. Sign in so we can securely connect you to the baby's profile.</p>
+        <div class="mt-5 space-y-2.5">
+          <button type="button" data-signin class="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl bg-ink text-[15px] font-semibold text-white transition hover:bg-black"><i class="fa-brands fa-apple text-[17px]"></i>Continue with Apple</button>
+          <button type="button" data-signin class="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border border-line bg-white text-[15px] font-semibold text-ink transition hover:bg-cream"><i class="fa-brands fa-google text-[15px] text-[#4285F4]"></i>Continue with Google</button>
+          <button type="button" data-signin class="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border border-line bg-white text-[15px] font-semibold text-ink transition hover:bg-cream"><i class="fa-regular fa-envelope text-[15px] text-sage-700"></i>Continue with Email</button>
+        </div>
+        <p class="mt-4 text-center text-[12px] text-muted">We only use this to keep shared records secure.</p>
+      </div>
+    </div>
+
+    <!-- 5. Join confirmation sheet -->
+    <div id="confirm-sheet" class="pointer-events-none absolute inset-0 z-40 opacity-0 transition duration-300" aria-hidden="true">
+      <div data-close="confirm-sheet" class="absolute inset-0 bg-ink/35"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="confirm-title" class="sheet-panel absolute inset-x-0 bottom-0 translate-y-8 rounded-t-[28px] bg-white px-6 pb-8 pt-3 text-center transition duration-300">
+        <div class="mx-auto h-1.5 w-10 rounded-full bg-line"></div>
+        <h3 id="confirm-title" class="mt-5 font-display text-[22px] font-semibold text-ink">Join Emma's Profile?</h3>
+        <div class="mx-auto mt-5 h-[84px] w-[84px] rounded-full bg-white p-1 shadow-[0_10px_22px_-10px_rgba(60,107,89,0.55)] ring-1 ring-sage-200">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_86232bfb8e_f1696934be8883bd.png" alt="Emma" class="h-full w-full rounded-full bg-sage-50 object-cover" />
+        </div>
+        <p class="mt-3 font-display text-[22px] font-semibold leading-tight text-ink">Emma</p>
+        <p class="text-[14px] font-semibold text-sage-700">2 months old</p>
+        <p class="mx-auto mt-3 max-w-[300px] text-[14px] leading-relaxed text-muted">You'll be able to view Emma's feeding and activity records and help keep them updated.</p>
+        <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-sage-50 px-3 py-1 text-[12px] font-medium text-sage-800"><i class="fa-solid fa-user-group text-[10px]"></i>Shared by Sarah · You'll join as a caregiver</p>
+        <button id="confirm-join" type="button" data-navigate="S03-home"
+          class="mt-6 flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition hover:bg-sage-800 active:scale-[0.98] disabled:opacity-80">
+          <span id="confirm-label">Join Profile</span><i id="confirm-icon" class="fa-solid fa-arrow-right text-[15px]"></i>
+        </button>
+        <button type="button" data-close="confirm-sheet" class="mt-2 flex h-12 w-full items-center justify-center rounded-2xl text-[15px] font-semibold text-muted transition hover:bg-cream">Cancel</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const LEN = 6;
+      const boxesWrap = $('code-boxes');
+      let signedIn = false, verifying = false, failures = 0, lockedUntil = 0;
+
+      // Build six inputs
+      boxesWrap.innerHTML = Array.from({ length: LEN }, (_, i) => `
+        <input type="text" inputmode="text" autocapitalize="characters" autocomplete="${i === 0 ? 'one-time-code' : 'off'}" spellcheck="false"
+          maxlength="1" data-i="${i}" aria-label="Character ${i + 1} of ${LEN}"
+          class="code-box h-[58px] w-full min-w-0 rounded-2xl border-[1.5px] border-line bg-white text-center font-display text-[26px] font-semibold uppercase text-ink caret-sage-700 shadow-[0_4px_12px_-10px_rgba(47,58,53,0.35)] transition focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" />`).join('');
+      const boxes = [...boxesWrap.querySelectorAll('.code-box')];
+      // Default state: first box shown as the active one (without forcing the keyboard open)
+      const first = boxes[0];
+      first.classList.remove('border-line'); first.classList.add('border-sage-500', 'ring-4', 'ring-sage-100');
+      const clearHint = () => { first.classList.remove('border-sage-500', 'ring-4', 'ring-sage-100'); if (!first.value) first.classList.add('border-line'); };
+      boxes.forEach(b => b.addEventListener('focus', clearHint, { once: true }));
+      const clean = s => s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const code = () => boxes.map(b => b.value).join('');
+
+      function setError(msg) {
+        const e = $('code-error');
+        e.classList.toggle('hidden', !msg); e.classList.toggle('flex', !!msg);
+        $('code-help').classList.toggle('hidden', !!msg);
+        $('code-error-text').textContent = msg || '';
+        boxes.forEach(b => {
+          b.classList.toggle('border-[#E3B9A2]', !!msg);
+          b.classList.toggle('border-line', !msg && !b.value);
+          b.classList.toggle('border-sage-300', !msg && !!b.value);
+        });
+        if (msg) { boxesWrap.classList.remove('shake'); void boxesWrap.offsetWidth; boxesWrap.classList.add('shake'); }
+      }
+
+      function update() {
+        boxes.forEach(b => { b.classList.toggle('border-sage-300', !!b.value); b.classList.toggle('bg-sage-50/40', !!b.value); });
+        $('join-btn').disabled = code().length !== LEN || verifying || Date.now() < lockedUntil;
+      }
+
+      function fill(start, chars) {
+        let i = start;
+        for (const ch of chars) { if (i >= LEN) break; boxes[i].value = ch; i++; }
+        boxes[Math.min(i, LEN - 1)].focus();
+        setError(''); update();
+      }
+
+      boxes.forEach((b, i) => {
+        b.addEventListener('input', () => {
+          const v = clean(b.value);
+          if (v.length > 1) { b.value = ''; fill(i, v); return; }   // autofill / multi-char input
+          b.value = v;
+          if (v && i < LEN - 1) boxes[i + 1].focus();
+          setError(''); update();
+        });
+        b.addEventListener('keydown', e => {
+          if (e.key === 'Backspace' && !b.value && i > 0) { boxes[i - 1].value = ''; boxes[i - 1].focus(); update(); e.preventDefault(); }
+          if (e.key === 'ArrowLeft' && i > 0) boxes[i - 1].focus();
+          if (e.key === 'ArrowRight' && i < LEN - 1) boxes[i + 1].focus();
+          if (e.key === 'Enter' && !$('join-btn').disabled) $('join-btn').click();
+        });
+        b.addEventListener('paste', e => {
+          e.preventDefault();
+          const text = clean((e.clipboardData || window.clipboardData).getData('text')).slice(0, LEN);
+          if (text) fill(text.length === LEN ? 0 : i, text);
+        });
+        b.addEventListener('focus', () => b.select());
+      });
+
+      // Sheets
+      function toggle(id, open) {
+        const s = $(id);
+        s.classList.toggle('opacity-0', !open); s.classList.toggle('pointer-events-none', !open);
+        s.querySelector('.sheet-panel').classList.toggle('translate-y-8', !open);
+        s.setAttribute('aria-hidden', !open);
+      }
+      document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => toggle(el.dataset.close, false)));
+
+      function setVerifying(on) {
+        verifying = on;
+        $('join-label').textContent = on ? 'Verifying…' : 'Join Profile';
+        $('join-icon').className = on ? 'fa-solid fa-circle-notch fa-spin text-[15px]' : 'fa-solid fa-arrow-right text-[15px]';
+        boxes.forEach(b => b.disabled = on);
+        update();
+      }
+
+      // Simulated server verification (codes expire after 24h; attempts are rate-limited)
+      // Demo codes: K7M2Q9 valid · EXP24H expired · JOINED already a caregiver
+      function verify(c) {
+        return new Promise(resolve => setTimeout(() => {
+          if (navigator.onLine === false) return resolve('network');
+          if (c === 'K7M2Q9') return resolve('ok');
+          if (c === 'EXP24H') return resolve('expired');
+          if (c === 'JOINED') return resolve('joined');
+          resolve('invalid');
+        }, 1100));
+      }
+      const MESSAGES = {
+        invalid: "That code doesn't look right. Please check and try again.",
+        expired: 'This invitation has expired. Ask the profile owner for a new code.',
+        joined: "You're already a caregiver for this baby.",
+        network: "Couldn't connect. Check your internet connection and try again.",
+        limited: 'Too many attempts. Please wait a minute and try again.'
+      };
+
+      $('join-btn').addEventListener('click', async () => {
+        if ($('join-btn').disabled) return;
+        if (Date.now() < lockedUntil) return setError(MESSAGES.limited);
+        setVerifying(true);
+        const result = await verify(code());
+        setVerifying(false);
+        if (result === 'ok') {
+          failures = 0;
+          if (!signedIn) toggle('signin-sheet', true);   // sign in before revealing any baby details
+          else toggle('confirm-sheet', true);
+          return;
+        }
+        if (result === 'invalid' || result === 'expired') failures++;
+        if (failures >= 5) {
+          lockedUntil = Date.now() + 60000; failures = 0;
+          setError(MESSAGES.limited); update();
+          setTimeout(update, 60000);
+          return;
+        }
+        setError(MESSAGES[result]);
+      });
+
+      document.querySelectorAll('[data-signin]').forEach(b => b.addEventListener('click', () => {
+        signedIn = true;
+        toggle('signin-sheet', false);
+        setTimeout(() => toggle('confirm-sheet', true), 320);
+      }));
+
+      // Access is granted only after authentication + confirmation
+      $('confirm-join').addEventListener('click', () => {
+        const btn = $('confirm-join'); if (btn.disabled) return;
+        btn.disabled = true;
+        $('confirm-label').textContent = 'Joining…';
+        $('confirm-icon').className = 'fa-solid fa-circle-notch fa-spin text-[15px]';
+        setTimeout(() => {
+          toggle('confirm-sheet', false);
+          const t = $('toast'); t.classList.remove('opacity-0', 'translate-y-3');
+          setTimeout(() => t.classList.add('opacity-0', 'translate-y-3'), 3000);
+          $('join-label').textContent = 'Opening Emma\'s Home…';
+          btn.disabled = false; $('confirm-label').textContent = 'Join Profile';
+          $('confirm-icon').className = 'fa-solid fa-arrow-right text-[15px]';
+        }, 900);
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>

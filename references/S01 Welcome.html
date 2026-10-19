@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            cream: '#FAF9F6',
+            ink: '#2F3A35',
+            muted: '#6B746F'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="welcome-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <!-- soft background glow -->
+    <div aria-hidden="true" class="pointer-events-none absolute -top-24 left-1/2 h-[380px] w-[380px] -translate-x-1/2 rounded-full bg-sage-100/70 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute bottom-28 -right-24 h-[220px] w-[220px] rounded-full bg-[#F3E9DF]/70 blur-3xl"></div>
+
+    <!-- 1. Logo -->
+    <header id="header" class="relative z-10 flex flex-col items-center pt-14">
+      <div id="brand-logo" class="flex flex-col items-center">
+        <div class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-sage-300 shadow-[0_10px_22px_-10px_rgba(60,107,89,0.55)] ring-4 ring-white">
+          <svg width="24" height="29" viewBox="0 0 20 24" fill="none" aria-hidden="true">
+            <path d="M8 1.5h4a.8.8 0 0 1 .8.8V4H7.2V2.3a.8.8 0 0 1 .8-.8Z" fill="#FFFFFF"/>
+            <rect x="5" y="4.2" width="10" height="2.6" rx="1.3" fill="#FFFFFF"/>
+            <path d="M5.6 8h8.8a1 1 0 0 1 1 1v11.2a2.6 2.6 0 0 1-2.6 2.6H7.2a2.6 2.6 0 0 1-2.6-2.6V9a1 1 0 0 1 1-1Z" fill="#FFFFFF" fill-opacity="0.95"/>
+            <path d="M4.6 15.2h10.8v5a2.6 2.6 0 0 1-2.6 2.6H7.2a2.6 2.6 0 0 1-2.6-2.6v-5Z" fill="#E3EDE7"/>
+            <rect x="8" y="11" width="4" height="1.3" rx="0.65" fill="#A8C5B5"/>
+          </svg>
+        </div>
+        <span class="mt-2.5 font-display text-[24px] font-semibold tracking-tight text-ink">Feedla</span>
+      </div>
+    </header>
+
+    <!-- 2. Main illustration -->
+    <section id="hero-illustration" class="relative z-10 mt-6 flex justify-center px-8">
+      <div class="relative">
+        <div aria-hidden="true" class="absolute inset-0 -m-3 rounded-[48px] bg-white/70 shadow-[0_2px_10px_-6px_rgba(47,58,53,0.15)]"></div>
+        <div class="relative h-[284px] w-[284px] overflow-hidden rounded-[42px] bg-sage-50 shadow-[0_20px_40px_-24px_rgba(60,107,89,0.4)]">
+          <img
+            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_16d94af124_0e7076f47be4274f.png"
+            alt="A happy baby resting comfortably on a soft blanket"
+            class="h-full w-full object-cover" />
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Welcome message -->
+    <section id="welcome-copy" class="relative z-10 mt-9 px-7 text-center">
+      <h1 class="font-display text-[34px] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
+        Every little feed matters.
+      </h1>
+      <p class="mx-auto mt-3.5 max-w-[320px] text-[15px] leading-[1.6] text-muted">
+        Track your baby's milk, diapers, and baths with ease. Get personalized feeding guidance as your baby grows.
+      </p>
+    </section>
+
+    <!-- 4 & 5. Primary button + footer -->
+    <section id="cta-area" class="relative z-10 mt-auto px-6 pb-9">
+      <button
+        id="get-started-btn"
+        type="button"
+        data-navigate="S02-baby-setup"
+        aria-label="Get started and set up your baby's profile"
+        class="group flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70">
+        Get Started
+        <i class="fa-solid fa-arrow-right text-[15px] transition-transform duration-200 group-hover:translate-x-0.5"></i>
+      </button>
+      <p id="footer" class="mt-4 text-center text-[13px] text-muted/90">
+        Made with love for your little one.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

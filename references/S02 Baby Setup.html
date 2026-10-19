@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baby Setup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            cream: '#FAF9F6',
+            line: '#E7E5E0',
+            ink: '#2F3A35',
+            muted: '#6B746F'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+    #form-scroll::-webkit-scrollbar { display: none; }
+    #form-scroll { scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="baby-setup-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <div aria-hidden="true" class="pointer-events-none absolute -top-28 -right-20 h-[300px] w-[300px] rounded-full bg-sage-100/70 blur-3xl"></div>
+
+    <!-- 1. Header (top bar) -->
+    <header id="header" class="relative z-10 px-6 pt-14">
+      <button id="back-btn" type="button" data-navigate="S01-welcome" aria-label="Go back"
+        class="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-ink shadow-[0_2px_8px_-4px_rgba(47,58,53,0.15)] transition hover:bg-sage-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/60">
+        <i class="fa-solid fa-arrow-left text-[15px]"></i>
+      </button>
+    </header>
+
+    <!-- Scrollable form -->
+    <div id="form-scroll" class="relative z-10 flex-1 overflow-y-auto px-6 pb-8">
+
+      <section id="intro" class="pt-5">
+        <h1 class="font-display text-[28px] font-semibold leading-[1.12] tracking-[-0.02em] text-ink">Let's get to know your baby</h1>
+        <p class="mt-2 text-[15px] leading-[1.55] text-muted">A few details will help us personalize your baby's feeding guidance.</p>
+      </section>
+
+      <!-- 2. Baby information -->
+      <form id="baby-form" class="mt-6 space-y-5" novalidate>
+
+        <div id="field-name">
+          <label for="baby-name" class="mb-2 block text-[14px] font-semibold text-ink">Baby's name</label>
+          <input id="baby-name" name="babyName" type="text" required autocomplete="off" autocapitalize="words" placeholder="Enter baby's name" value="Emma"
+            class="h-12 w-full rounded-[14px] border border-line bg-white px-4 text-[16px] text-ink placeholder:text-[#A3A9A5] transition focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" />
+        </div>
+
+        <div id="field-dob">
+          <label for="baby-dob" class="mb-2 block text-[14px] font-semibold text-ink">Date of birth</label>
+          <div class="relative">
+            <input id="baby-dob" name="dob" type="date" required aria-describedby="dob-error"
+              class="relative h-12 w-full appearance-none rounded-[14px] border border-line bg-white pl-4 pr-12 text-[16px] text-ink transition focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" />
+            <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sage-700"><i class="fa-regular fa-calendar text-[17px]"></i></span>
+          </div>
+          <p id="dob-error" class="mt-2 hidden items-center gap-1.5 text-[13px] text-muted"><i class="fa-regular fa-circle-check text-[12px] text-sage-600"></i>Birth dates can't be in the future, so we set it to today.</p>
+        </div>
+
+        <div id="field-weight">
+          <div id="weight-grid" class="grid grid-cols-2 gap-3">
+            <div id="weight-col">
+              <label for="baby-weight" class="mb-2 block text-[14px] font-semibold text-ink">Current weight</label>
+              <div class="relative">
+                <input id="baby-weight" name="weight" type="text" inputmode="decimal" placeholder="e.g. 5.0" value="5.0" maxlength="5" aria-describedby="weight-help"
+                  class="h-12 w-full rounded-[14px] border border-line bg-white pl-4 pr-14 text-[16px] text-ink placeholder:text-[#A3A9A5] transition focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-sage-50 px-2 py-0.5 text-[13px] font-semibold text-sage-700">kg</span>
+              </div>
+            </div>
+            <!-- Weight measured on (only when weight entered) -->
+            <div id="field-weight-date">
+              <label for="weight-date" class="mb-2 block text-[14px] font-semibold text-ink">Weight measured on</label>
+              <div class="relative">
+                <input id="weight-date" name="weightDate" type="date"
+                  class="relative h-12 w-full appearance-none rounded-[14px] border border-line bg-white pl-3 pr-9 text-[15px] text-ink transition focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sage-700"><i class="fa-regular fa-calendar text-[15px]"></i></span>
+              </div>
+            </div>
+          </div>
+          <p id="weight-help" class="mt-1.5 text-[13px] text-muted">Optional · You can update this anytime.</p>
+        </div>
+
+        <!-- 3. Feeding guidance eligibility -->
+        <section id="eligibility" class="rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-22px_rgba(47,58,53,0.45)]">
+          <h2 class="font-display text-[19px] font-semibold tracking-[-0.01em] text-ink">A little more about your baby</h2>
+          <p class="mt-1 text-[13px] leading-relaxed text-muted">This helps us show feeding guidance that's appropriate for your baby.</p>
+
+          <fieldset id="q-premature" class="mt-4">
+            <legend class="text-[14px] font-semibold text-ink">Was your baby born prematurely?</legend>
+            <div class="seg-group mt-2.5 grid grid-cols-3 gap-1 rounded-[14px] bg-cream p-1 ring-1 ring-line" data-name="premature"></div>
+          </fieldset>
+
+          <fieldset id="q-plan" class="mt-4">
+            <legend class="text-[14px] font-semibold text-ink">Does your baby have a feeding plan from a doctor?</legend>
+            <div class="seg-group mt-2.5 grid grid-cols-3 gap-1 rounded-[14px] bg-cream p-1 ring-1 ring-line" data-name="plan"></div>
+          </fieldset>
+        </section>
+      </form>
+    </div>
+
+    <!-- 4. Primary action (fixed) -->
+    <footer id="footer" class="relative z-20 border-t border-line/70 bg-cream/95 px-6 pb-8 pt-3 shadow-[0_-12px_24px_-16px_rgba(47,58,53,0.18)] backdrop-blur">
+      <button id="create-profile-btn" type="submit" form="baby-form" data-navigate="S03-home-dashboard"
+        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BFCFC7] disabled:shadow-none disabled:active:scale-100">
+        <span id="btn-label">Create Baby Profile</span>
+        <i id="btn-icon" class="fa-solid fa-arrow-right text-[15px]"></i>
+      </button>
+      <p id="btn-hint" class="mt-2.5 hidden text-center text-[12px] text-muted">Add your baby's name and date of birth to continue.</p>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const pad = n => String(n).padStart(2, '0');
+      const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const today = ymd(new Date());
+
+      const name = $('baby-name'), dob = $('baby-dob'), weight = $('baby-weight');
+      const weightDate = $('weight-date'), weightDateRow = $('field-weight-date');
+      const btn = $('create-profile-btn'), hint = $('btn-hint'), form = $('baby-form');
+
+      // Sample data (matches the brief); falls back safely if the sample date is in the future
+      let sampleDob = '2026-08-18';
+      if (sampleDob > today) { const d = new Date(); d.setDate(d.getDate() - 61); sampleDob = ymd(d); }
+      dob.max = today; dob.value = sampleDob;
+      weightDate.max = today; weightDate.value = today;
+
+      // Segmented Yes / No / Not sure
+      const answers = { premature: 'no', plan: 'no' };
+      const OPTIONS = [['yes', 'Yes'], ['no', 'No'], ['unsure', 'Not sure']];
+      function renderSegs() {
+        document.querySelectorAll('.seg-group').forEach(g => {
+          const key = g.dataset.name;
+          g.setAttribute('role', 'radiogroup');
+          g.innerHTML = OPTIONS.map(([v, l]) => {
+            const on = answers[key] === v;
+            return `<button type="button" role="radio" aria-checked="${on}" data-key="${key}" data-val="${v}"
+              class="seg flex h-11 items-center justify-center gap-1.5 rounded-[11px] text-[14px] font-semibold transition ${on ? 'bg-white text-sage-700 shadow-[0_2px_8px_-3px_rgba(47,58,53,0.25)] ring-1 ring-sage-300' : 'text-muted hover:text-ink'}">
+              ${on ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}${l}</button>`;
+          }).join('');
+        });
+      }
+      form.addEventListener('click', e => {
+        const s = e.target.closest('.seg'); if (!s) return;
+        answers[s.dataset.key] = answers[s.dataset.key] === s.dataset.val ? null : s.dataset.val;
+        renderSegs();
+      });
+
+      function syncWeightDate() {
+        const has = weight.value.trim() !== '' && !isNaN(parseFloat(weight.value.replace(',', '.')));
+        weightDateRow.classList.toggle('hidden', !has);
+        $('weight-col').classList.toggle('col-span-2', !has);
+        if (has && !weightDate.value) weightDate.value = today;
+      }
+
+      function update() {
+        const ok = name.value.trim().length > 0 && !!dob.value && dob.value <= today;
+        btn.disabled = !ok;
+        hint.classList.toggle('hidden', ok);
+      }
+
+      dob.addEventListener('change', () => {
+        const future = dob.value > today;
+        if (future) dob.value = today;
+        $('dob-error').classList.toggle('hidden', !future);
+        $('dob-error').classList.toggle('flex', future);
+        update();
+      });
+      weightDate.addEventListener('change', () => { if (weightDate.value > today) weightDate.value = today; });
+      name.addEventListener('input', update);
+      weight.addEventListener('input', () => {
+        let v = weight.value.replace(/[^0-9.,]/g, '').replace(',', '.');
+        const p = v.split('.'); if (p.length > 2) v = p[0] + '.' + p.slice(1).join('');
+        weight.value = v; syncWeightDate();
+      });
+
+      // Save once; numerical guidance only when eligibility allows (not premature, no doctor plan)
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        if (btn.disabled) return;
+        const profile = {
+          name: name.value.trim(), dob: dob.value,
+          weightKg: weight.value ? parseFloat(weight.value) : null,
+          weightDate: weight.value ? weightDate.value : null,
+          premature: answers.premature, doctorPlan: answers.plan,
+          numericGuidance: answers.premature === 'no' && answers.plan === 'no' && !!weight.value
+        };
+        btn.dataset.profile = JSON.stringify(profile);
+        btn.disabled = true;
+        $('btn-label').textContent = 'Creating profile…';
+        $('btn-icon').className = 'fa-solid fa-circle-notch fa-spin text-[15px]';
+        setTimeout(() => {
+          btn.classList.remove('disabled:bg-[#BFCFC7]');
+          $('btn-label').textContent = 'Profile created';
+          $('btn-icon').className = 'fa-solid fa-check text-[15px]';
+        }, 900);
+      });
+
+      renderSegs(); syncWeightDate(); update();
+    })();
+  </script>
+</body>
+</html>

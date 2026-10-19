@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Record</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            sky: { soft: '#E6EFF4', ink: '#41708C' },
+            sand: { soft: '#F4ECE2', ink: '#86654A' },
+            lilac: { soft: '#ECEAF4', ink: '#5E5A86' },
+            cream: '#FAF9F6',
+            line: '#ECEAE5',
+            ink: '#2F3A35',
+            muted: '#6B746F'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .bump { animation: bump .3s ease; }
+    @keyframes bump { 0% { transform: scale(1); } 45% { transform: scale(1.06); } 100% { transform: scale(1); } }
+    .fade-in { animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="add-record-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <div aria-hidden="true" class="pointer-events-none absolute -top-32 left-1/2 h-[300px] w-[340px] -translate-x-1/2 rounded-full bg-sage-100/70 blur-3xl"></div>
+
+    <!-- 1. Header -->
+    <header id="header" class="relative z-10 grid grid-cols-[44px_1fr_44px] items-center px-5 pt-14">
+      <button id="back-btn" type="button" data-navigate="S03-home" aria-label="Back to Home"
+        class="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-ink shadow-[0_2px_8px_-4px_rgba(47,58,53,0.15)] transition hover:bg-sage-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/60">
+        <i class="fa-solid fa-arrow-left text-[15px]"></i>
+      </button>
+      <h1 class="text-center font-display text-[20px] font-semibold tracking-[-0.01em] text-ink">Add Record</h1>
+      <span aria-hidden="true"></span>
+    </header>
+
+    <form id="record-form" class="relative z-10 flex flex-1 flex-col px-5" novalidate>
+
+      <!-- 2. Activity type -->
+      <section id="activity-type" class="mt-7">
+        <h2 class="font-display text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink">What would you like to record?</h2>
+        <div id="type-grid" class="mt-4 grid grid-cols-4 gap-2" role="group" aria-label="Activity type"></div>
+      </section>
+
+      <!-- 3. Dynamic input area -->
+      <section id="dynamic-area" class="mt-8"></section>
+
+      <!-- Date & time (all activities) -->
+      <section id="record-time" class="mt-8">
+        <label for="time-input" class="text-[14px] font-semibold text-ink">Date &amp; Time</label>
+        <div class="relative mt-3">
+          <div class="flex h-14 items-center gap-3 rounded-2xl border border-line bg-white px-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-sage-50 text-sage-700"><i class="fa-regular fa-clock text-[14px]"></i></span>
+            <span id="time-display" class="flex-1 text-[16px] font-semibold text-ink">Today, 10:30 AM</span>
+            <span class="text-[13px] font-semibold text-sage-700">Change</span>
+          </div>
+          <input id="time-input" name="time" type="datetime-local" aria-label="Date and time" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+        </div>
+        <p id="time-hint" class="mt-2 hidden text-[12px] font-medium text-muted"><i class="fa-regular fa-circle-check mr-1 text-sage-600"></i>Records can't be in the future, so we set it to now.</p>
+      </section>
+    </form>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite"
+      class="pointer-events-none absolute inset-x-5 bottom-[118px] z-30 flex translate-y-3 items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3.5 text-white opacity-0 shadow-[0_16px_30px_-12px_rgba(47,58,53,0.6)] transition duration-300">
+      <span class="flex items-center gap-2.5 text-[14px] font-medium"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-sage-300 text-ink"><i class="fa-solid fa-check text-[11px]"></i></span><span id="toast-text">Milk saved</span></span>
+      <button id="toast-undo" type="button" class="rounded-lg px-2 py-1 text-[14px] font-semibold text-sage-300 hover:bg-white/10">Undo</button>
+    </div>
+
+    <!-- 4. Primary action -->
+    <footer id="footer" class="relative z-20 px-5 pb-9 pt-3">
+      <button id="save-btn" type="submit" form="record-form" data-navigate="S03-home"
+        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BFCFC7] disabled:shadow-none disabled:active:scale-100">
+        <i id="save-icon" class="fa-solid fa-check text-[15px]"></i>
+        <span id="save-label">Save Record</span>
+      </button>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const MIN = 5, MAX = 400, STEP = 10;
+      const lastMilkMl = 120; // prefill: most recent recorded amount
+
+      const BOTTLE = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5h3v2.2h-3z"/><rect x="7" y="4.7" width="10" height="2.6" rx="1.3"/><path d="M8 7.3h8v11.6a2.6 2.6 0 0 1-2.6 2.6h-2.8A2.6 2.6 0 0 1 8 18.9z"/><path d="M8 13h3M8 16h2"/></svg>`;
+      const DIAPER = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6h17v3.6c0 4.9-3.8 8.9-8.5 8.9s-8.5-4-8.5-8.9z"/><path d="M3.5 9.5h17M7.5 9.5v2.4M16.5 9.5v2.4"/></svg>`;
+
+      const TYPES = {
+        milk: { label: 'Milk', tint: 'bg-sage-100 text-sage-700', icon: () => BOTTLE(22) },
+        pee:  { label: 'Pee', tint: 'bg-sky-soft text-sky-ink', icon: () => '<i class="fa-solid fa-droplet text-[18px]"></i>' },
+        poop: { label: 'Poop', tint: 'bg-sand-soft text-sand-ink', icon: () => DIAPER(22) },
+        bath: { label: 'Bath', tint: 'bg-lilac-soft text-lilac-ink', icon: () => '<i class="fa-solid fa-bath text-[17px]"></i>' }
+      };
+
+      // Selection: Milk or Bath alone; Pee and Poop may be combined into one diaper event
+      let sel = new Set(['milk']);
+      let amount = lastMilkMl;
+      let saving = false, saved = false;
+
+      const isDiaper = () => [...sel].every(t => t === 'pee' || t === 'poop');
+
+      function renderTypes() {
+        $('type-grid').innerHTML = Object.entries(TYPES).map(([k, t]) => {
+          const on = sel.has(k);
+          return `<button type="button" data-type="${k}" aria-pressed="${on}"
+            class="type-card relative flex h-[104px] flex-col items-center justify-center gap-2 rounded-2xl border transition active:scale-[0.97] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-100 ${on ? 'border-sage-500 bg-sage-50 shadow-[0_0_0_1px_#7FA592]' : 'border-line bg-white shadow-[0_6px_16px_-14px_rgba(47,58,53,0.4)]'}">
+            <span class="flex h-11 w-11 items-center justify-center rounded-full ${on ? 'bg-white ' + t.tint.split(' ')[1] : t.tint}">${t.icon()}</span>
+            <span class="text-[13px] font-semibold ${on ? 'text-sage-800' : 'text-ink'}">${t.label}</span>
+            ${on ? '<span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-sage-700 text-white"><i class="fa-solid fa-check text-[8px]"></i></span>' : ''}
+          </button>`;
+        }).join('');
+      }
+
+      function milkPanel() {
+        return `<div class="fade-in">
+          <div class="flex items-baseline justify-between">
+            <label for="amount-input" class="text-[14px] font-semibold text-ink">Amount Consumed</label>
+            <span class="text-[12px] font-medium text-muted">What your baby drank</span>
+          </div>
+          <div class="mt-3 rounded-2xl border border-line bg-white px-4 py-6 shadow-[0_10px_26px_-20px_rgba(47,58,53,0.4)]">
+            <div class="flex items-center justify-between">
+              <button id="minus-btn" type="button" aria-label="Decrease by 10 ml" class="flex h-14 w-14 items-center justify-center rounded-2xl bg-sage-50 text-sage-700 transition hover:bg-sage-100 active:scale-95 disabled:opacity-40"><i class="fa-solid fa-minus text-[18px]"></i></button>
+              <label for="amount-input" id="amount-display" class="flex cursor-text items-baseline justify-center gap-1.5">
+                <input id="amount-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="${amount ?? ''}" aria-describedby="amount-hint"
+                  class="w-[96px] bg-transparent text-right font-display text-[46px] font-semibold leading-none tracking-[-0.02em] text-ink caret-sage-700 focus:outline-none" />
+                <span class="text-[18px] font-semibold text-muted">ml</span>
+              </label>
+              <button id="plus-btn" type="button" aria-label="Increase by 10 ml" class="flex h-14 w-14 items-center justify-center rounded-2xl bg-sage-700 text-white shadow-[0_8px_18px_-10px_rgba(60,107,89,0.8)] transition hover:bg-sage-800 active:scale-95 disabled:opacity-40"><i class="fa-solid fa-plus text-[18px]"></i></button>
+            </div>
+            <p id="amount-hint" class="mt-3 text-center text-[12px] font-medium text-muted">Last recorded: ${lastMilkMl} ml · Formula</p>
+          </div>
+        </div>`;
+      }
+
+      function diaperPanel() {
+        const pee = sel.has('pee'), poop = sel.has('poop');
+        const title = pee && poop ? 'Pee & Poop' : pee ? 'Pee' : 'Poop';
+        const chip = (k, on) => `<button type="button" data-toggle="${k}" aria-pressed="${on}" class="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-[14px] font-semibold transition active:scale-[0.98] ${on ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-line bg-white text-muted hover:text-ink'}">
+            <span class="flex h-5 w-5 items-center justify-center rounded-md ${on ? 'bg-sage-700 text-white' : 'border border-[#C9CCC8] bg-white'}">${on ? '<i class="fa-solid fa-check text-[9px]"></i>' : ''}</span>${TYPES[k].label}</button>`;
+        return `<div class="fade-in">
+          <p class="text-[14px] font-semibold text-ink">Diaper Change</p>
+          <div class="mt-3 rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-20px_rgba(47,58,53,0.4)]">
+            <div class="flex items-center gap-3">
+              <span class="relative flex h-12 w-12 items-center justify-center rounded-2xl ${poop ? 'bg-sand-soft text-sand-ink' : 'bg-sky-soft text-sky-ink'}">
+                ${poop ? DIAPER(24) : '<i class="fa-solid fa-droplet text-[19px]"></i>'}
+                ${pee && poop ? '<span class="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-sky-soft text-sky-ink ring-2 ring-white"><i class="fa-solid fa-droplet text-[10px]"></i></span>' : ''}
+              </span>
+              <div>
+                <p class="font-display text-[20px] font-semibold leading-tight text-ink">${title}</p>
+                <p class="text-[13px] text-muted">${pee && poop ? 'Adds +1 Pee and +1 Poop' : pee ? 'Adds +1 Pee to today' : 'Adds +1 Poop to today'}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex gap-2.5">${chip('pee', pee)}${chip('poop', poop)}</div>
+            <p class="mt-3 text-[12px] text-muted">Tick both if it was a wet and dirty diaper.</p>
+          </div>
+        </div>`;
+      }
+
+      function bathPanel() {
+        return `<div class="fade-in">
+          <p class="text-[14px] font-semibold text-ink">Bath Time</p>
+          <div class="mt-3 flex items-center gap-3.5 rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-20px_rgba(47,58,53,0.4)]">
+            <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-lilac-soft text-lilac-ink"><i class="fa-solid fa-bath text-[19px]"></i></span>
+            <div>
+              <p class="font-display text-[20px] font-semibold leading-tight text-ink">Bath</p>
+              <p class="text-[13px] text-muted">Updates Emma's Last Bath on Home.</p>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      function renderPanel() {
+        const area = $('dynamic-area');
+        area.innerHTML = sel.has('milk') ? milkPanel() : sel.has('bath') ? bathPanel() : diaperPanel();
+        if (sel.has('milk')) bindMilk();
+        validate();
+      }
+
+      function bindMilk() {
+        const input = $('amount-input');
+        const set = n => {
+          amount = Math.max(MIN, Math.min(MAX, n)); input.value = amount;
+          const d = $('amount-display'); d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump');
+          validate();
+        };
+        $('minus-btn').addEventListener('click', () => set((amount ?? 0) - STEP));
+        $('plus-btn').addEventListener('click', () => set((amount ?? 0) + STEP));
+        input.addEventListener('focus', () => input.select());
+        input.addEventListener('input', () => {
+          input.value = input.value.replace(/\D/g, '').slice(0, 3);
+          amount = input.value ? parseInt(input.value, 10) : null;
+          validate();
+        });
+      }
+
+      function validate() {
+        let ok = sel.size > 0;
+        if (sel.has('milk')) {
+          const hint = $('amount-hint');
+          const valid = amount !== null && amount >= MIN && amount <= MAX;
+          ok = ok && valid;
+          if (hint) {
+            hint.textContent = amount === null ? 'Enter the amount your baby drank.' : !valid ? `Enter an amount between ${MIN} and ${MAX} ml.` : `Last recorded: ${lastMilkMl} ml · Formula`;
+            hint.className = `mt-3 text-center text-[12px] font-medium ${valid ? 'text-muted' : 'text-[#A0703F]'}`;
+          }
+          if ($('minus-btn')) { $('minus-btn').disabled = amount !== null && amount <= MIN; $('plus-btn').disabled = amount !== null && amount >= MAX; }
+        }
+        $('save-btn').disabled = !ok || saving || saved;
+      }
+
+      // Type selection
+      $('type-grid').addEventListener('click', e => {
+        const c = e.target.closest('.type-card'); if (!c) return;
+        const k = c.dataset.type;
+        if ((k === 'pee' || k === 'poop') && isDiaper() && sel.size) {
+          if (sel.has(k) && sel.size > 1) sel.delete(k); else sel.add(k);
+        } else {
+          sel = new Set([k]);
+        }
+        renderTypes(); renderPanel();
+      });
+      $('dynamic-area').addEventListener('click', e => {
+        const t = e.target.closest('[data-toggle]'); if (!t) return;
+        const k = t.dataset.toggle;
+        if (sel.has(k) && sel.size > 1) sel.delete(k); else sel.add(k);
+        renderTypes(); renderPanel();
+      });
+
+      // Date & time: defaults to now, never in the future
+      const pad = n => String(n).padStart(2, '0');
+      const toLocal = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      const timeInput = $('time-input');
+      function formatTime(d) {
+        const now = new Date();
+        const diff = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+        const day = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        return `${day}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      }
+      function setTime(d) { timeInput.value = toLocal(d); $('time-display').textContent = formatTime(d); }
+      timeInput.max = toLocal(new Date()); setTime(new Date());
+      timeInput.addEventListener('change', () => {
+        const n = new Date();
+        let d = timeInput.value ? new Date(timeInput.value) : n;
+        const future = d > n; if (future) d = n;
+        $('time-hint').classList.toggle('hidden', !future);
+        timeInput.max = toLocal(n); setTime(d);
+      });
+
+      // Save — one record per tap, guarded against repeats
+      let tt;
+      $('record-form').addEventListener('submit', e => {
+        e.preventDefault();
+        if (saving || saved || $('save-btn').disabled) return;
+        saving = true; validate();
+        $('save-label').textContent = 'Saving…';
+        $('save-icon').className = 'fa-solid fa-circle-notch fa-spin text-[15px]';
+        const msg = sel.has('milk') ? `Milk saved · ${amount} ml` : sel.has('bath') ? 'Bath saved' : sel.size === 2 ? 'Pee & Poop saved' : `${sel.has('pee') ? 'Pee' : 'Poop'} saved`;
+        setTimeout(() => {
+          saving = false; saved = true; validate();
+          $('save-label').textContent = 'Saved';
+          $('save-icon').className = 'fa-solid fa-check text-[15px]';
+          $('toast-text').textContent = msg;
+          const t = $('toast'); t.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+          clearTimeout(tt); tt = setTimeout(() => t.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none'), 5000);
+        }, 500);
+      });
+      $('toast-undo').addEventListener('click', () => {
+        $('toast').classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+        saved = false;
+        $('save-label').textContent = 'Save Record';
+        validate();
+      });
+
+      renderTypes(); renderPanel();
+    })();
+  </script>
+</body>
+</html>

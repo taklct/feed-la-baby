@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Update Weight</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            cream: '#FAF9F6',
+            line: '#ECEAE5',
+            ink: '#2F3A35',
+            muted: '#6B746F',
+            warm: '#A0703F'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    #form-scroll::-webkit-scrollbar { display: none; }
+    #form-scroll { scrollbar-width: none; }
+    .bump { animation: bump .3s ease; }
+    @keyframes bump { 0% { transform: scale(1); } 45% { transform: scale(1.06); } 100% { transform: scale(1); } }
+  </style>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="update-weight-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <div aria-hidden="true" class="pointer-events-none absolute left-1/2 top-[250px] h-[320px] w-[340px] -translate-x-1/2 rounded-full bg-sage-100/70 blur-3xl"></div>
+
+    <!-- 1. Header -->
+    <header id="header" class="relative z-10 grid grid-cols-[44px_1fr_44px] items-center px-5 pt-14">
+      <button id="back-btn" type="button" data-navigate="S06-baby-profile" aria-label="Back to Baby Profile"
+        class="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-ink shadow-[0_2px_8px_-4px_rgba(47,58,53,0.15)] transition hover:bg-sage-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/60">
+        <i class="fa-solid fa-arrow-left text-[15px]"></i>
+      </button>
+      <h1 class="text-center font-display text-[20px] font-semibold tracking-[-0.01em] text-ink">Update Weight</h1>
+      <span aria-hidden="true"></span>
+    </header>
+
+    <!-- Scrollable form (keeps Save visible above the keyboard) -->
+    <form id="weight-form" class="relative z-10 flex-1 overflow-y-auto px-5 pb-6" novalidate>
+      <div id="form-scroll"></div>
+
+      <!-- 2. Baby information -->
+      <section id="baby-card" class="mt-6 flex items-center gap-3.5 rounded-2xl border border-sage-200 bg-gradient-to-br from-sage-100 to-sage-50 p-4">
+        <div class="h-14 w-14 shrink-0 rounded-full bg-white p-[3px] shadow-[0_6px_14px_-8px_rgba(60,107,89,0.5)]">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_86232bfb8e_f1696934be8883bd.png" alt="Emma" class="h-full w-full rounded-full bg-sage-50 object-cover" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="font-display text-[20px] font-semibold leading-tight text-ink">Emma</p>
+          <p class="text-[13px] text-muted">2 months old</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Previous weight</p>
+          <p class="text-[17px] font-semibold text-sage-700">5.0 <span class="text-[13px]">kg</span></p>
+        </div>
+      </section>
+
+      <!-- 3. Weight input -->
+      <section id="weight-input-section" class="mt-8">
+        <h2 class="text-center font-display text-[24px] font-semibold tracking-[-0.02em] text-ink">What's Emma's weight?</h2>
+
+        <div id="weight-card" class="mt-4 rounded-[20px] border border-line bg-white px-4 pb-5 pt-6 shadow-[0_16px_34px_-24px_rgba(47,58,53,0.45)] transition">
+          <div class="flex items-center justify-between">
+            <button id="minus-btn" type="button" aria-label="Decrease by 0.1 kg"
+              class="flex h-14 w-14 items-center justify-center rounded-2xl bg-sage-50 text-sage-700 transition hover:bg-sage-100 active:scale-95 disabled:opacity-40 focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-200">
+              <i class="fa-solid fa-minus text-[18px]"></i>
+            </button>
+            <label for="weight-input" id="weight-display" class="flex cursor-text items-baseline justify-center gap-1.5">
+              <input id="weight-input" name="weight" type="text" inputmode="decimal" maxlength="4" value="5.2" aria-describedby="weight-help weight-error"
+                class="w-[92px] bg-transparent text-right font-display text-[48px] font-semibold leading-none tracking-[-0.02em] text-ink caret-sage-700 focus:outline-none" />
+              <span class="text-[20px] font-semibold text-muted">kg</span>
+            </label>
+            <button id="plus-btn" type="button" aria-label="Increase by 0.1 kg"
+              class="flex h-14 w-14 items-center justify-center rounded-2xl bg-sage-700 text-white shadow-[0_8px_18px_-10px_rgba(60,107,89,0.8)] transition hover:bg-sage-800 active:scale-95 disabled:opacity-40 focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/60">
+              <i class="fa-solid fa-plus text-[18px]"></i>
+            </button>
+          </div>
+          <p id="weight-help" class="mt-4 text-center text-[13px] text-muted">Enter your baby's most recent measured weight.</p>
+          <p id="weight-error" class="mt-2 hidden items-center justify-center gap-1.5 text-center text-[13px] font-medium text-warm"><i class="fa-solid fa-circle-info text-[12px]"></i><span id="weight-error-text"></span></p>
+        </div>
+      </section>
+
+      <!-- 4. Measurement date -->
+      <section id="measurement-date" class="mt-6">
+        <label for="date-input" class="text-[14px] font-semibold text-ink">Measurement Date</label>
+        <div class="relative mt-3">
+          <div class="flex h-14 items-center gap-3 rounded-2xl border border-line bg-white px-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-sage-50 text-sage-700"><i class="fa-regular fa-calendar text-[14px]"></i></span>
+            <span id="date-display" class="flex-1 text-[16px] font-semibold text-ink">18 October 2026</span>
+            <span id="date-today" class="rounded-full bg-sage-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-sage-700">Today</span>
+          </div>
+          <input id="date-input" name="date" type="date" aria-label="Measurement date" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+        </div>
+        <p id="date-hint" class="mt-2 hidden text-[12px] leading-relaxed text-muted"></p>
+      </section>
+
+      <!-- 5. Information card -->
+      <section id="info-card" class="mt-5 flex items-start gap-3 rounded-2xl bg-sage-50 p-4 ring-1 ring-sage-200/70">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-sage-700"><i class="fa-solid fa-heart text-[13px]"></i></span>
+        <div>
+          <p class="text-[14px] font-semibold text-sage-800">Growing together</p>
+          <p class="mt-0.5 text-[13px] leading-relaxed text-sage-800/80">Keeping Emma's weight updated helps Feedla provide more relevant feeding guidance.</p>
+        </div>
+      </section>
+    </form>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite"
+      class="pointer-events-none absolute inset-x-5 bottom-[118px] z-30 flex translate-y-3 items-center gap-2.5 rounded-2xl bg-ink px-4 py-3.5 text-[14px] font-medium text-white opacity-0 shadow-[0_16px_30px_-12px_rgba(47,58,53,0.6)] transition duration-300">
+      <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sage-300 text-ink"><i class="fa-solid fa-check text-[11px]"></i></span><span id="toast-text">Weight updated</span>
+    </div>
+
+    <!-- 6. Primary button -->
+    <footer id="footer" class="relative z-20 px-5 pb-9 pt-3">
+      <button id="save-btn" type="submit" form="weight-form" data-navigate="S06-baby-profile"
+        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BFCFC7] disabled:shadow-none disabled:active:scale-100">
+        <i id="save-icon" class="fa-solid fa-check text-[15px]"></i>
+        <span id="save-label">Save Weight</span>
+      </button>
+    </footer>
+
+    <!-- Large-change confirmation -->
+    <div id="confirm-dialog" class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center px-7 opacity-0 transition duration-200" aria-hidden="true">
+      <div id="confirm-backdrop" class="absolute inset-0 bg-ink/40"></div>
+      <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" class="relative w-full max-w-[330px] rounded-3xl bg-white p-6 text-center shadow-[0_30px_60px_-20px_rgba(47,58,53,0.5)]">
+        <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sage-50 text-sage-700"><i class="fa-solid fa-weight-scale text-[17px]"></i></span>
+        <h4 id="confirm-title" class="mt-3 font-display text-[20px] font-semibold text-ink">Just checking</h4>
+        <p id="confirm-text" class="mt-1.5 text-[13px] leading-relaxed text-muted">6.8 kg is quite different from Emma's previous 5.0 kg. Is that right?</p>
+        <div class="mt-5 grid grid-cols-2 gap-2.5">
+          <button id="confirm-edit" type="button" class="h-12 rounded-2xl border border-line bg-white text-[15px] font-semibold text-ink hover:bg-cream">Edit</button>
+          <button id="confirm-save" type="button" class="h-12 rounded-2xl bg-sage-700 text-[15px] font-semibold text-white hover:bg-sage-800">Save anyway</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const MIN = 1.0, MAX = 15.0, STEP = 0.1, BIG_CHANGE = 1.0;
+      const previous = { kg: 5.0, date: '2026-10-10' };   // latest saved measurement
+      let saving = false, saved = false;
+
+      const input = $('weight-input'), save = $('save-btn');
+      const pad = n => String(n).padStart(2, '0');
+      const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+      const longDate = s => parse(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      const value = () => { const n = parseFloat(input.value.replace(',', '.')); return isNaN(n) ? null : n; };
+
+      // Inline validation (Invalid Weight state)
+      function validate() {
+        const v = value();
+        let msg = '';
+        if (v === null) msg = "Enter Emma's weight to continue.";
+        else if (v <= 0) msg = 'Weight needs to be more than 0 kg.';
+        else if (v < MIN || v > MAX) msg = `Please enter a weight between ${MIN.toFixed(1)} and ${MAX.toFixed(1)} kg.`;
+        const invalid = !!msg;
+        $('weight-error-text').textContent = msg;
+        $('weight-error').classList.toggle('hidden', !invalid);
+        $('weight-error').classList.toggle('flex', invalid);
+        $('weight-help').classList.toggle('hidden', invalid);
+        $('weight-card').classList.toggle('border-[#E6CBB0]', invalid);
+        $('weight-card').classList.toggle('border-line', !invalid);
+        save.disabled = invalid || saving || saved;
+        $('minus-btn').disabled = v !== null && v <= MIN;
+        $('plus-btn').disabled = v !== null && v >= MAX;
+      }
+
+      function setWeight(n) {
+        n = Math.max(MIN, Math.min(MAX, Math.round(n * 10) / 10));
+        input.value = n.toFixed(1);
+        const d = $('weight-display'); d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump');
+        validate();
+      }
+
+      $('minus-btn').addEventListener('click', () => setWeight((value() ?? previous.kg) - STEP));
+      $('plus-btn').addEventListener('click', () => setWeight((value() ?? previous.kg) + STEP));
+      // Editing Weight state: decimal keyboard opens on tap
+      input.addEventListener('focus', () => input.select());
+      input.addEventListener('input', () => {
+        let v = input.value.replace(/[^0-9.,]/g, '').replace(',', '.');
+        const p = v.split('.');
+        if (p.length > 2) v = p[0] + '.' + p.slice(1).join('');
+        if (p[1] && p[1].length > 1) v = p[0] + '.' + p[1].slice(0, 1);
+        input.value = v; validate();
+      });
+      input.addEventListener('blur', () => { const v = value(); if (v !== null && v > 0) input.value = v.toFixed(1); });
+
+      // Measurement date: today by default, earlier allowed, no future
+      const dateInput = $('date-input');
+      function setDate(s) {
+        const today = ymd(new Date());
+        if (s > today) s = today;
+        dateInput.value = s; dateInput.max = today;
+        $('date-display').textContent = longDate(s);
+        $('date-today').classList.toggle('hidden', s !== today);
+        const older = s < previous.date;
+        $('date-hint').classList.toggle('hidden', !older);
+        $('date-hint').innerHTML = older ? `<i class="fa-regular fa-circle-check mr-1 text-sage-600"></i>This is earlier than the latest weight (${longDate(previous.date)}), so it will be added to Weight History without replacing the current weight.` : '';
+      }
+      setDate(ymd(new Date()));
+      dateInput.addEventListener('change', () => setDate(dateInput.value || ymd(new Date())));
+
+      // Save: large changes ask for confirmation instead of being rejected
+      const dlg = $('confirm-dialog');
+      const openConfirm = o => { dlg.classList.toggle('opacity-0', !o); dlg.classList.toggle('pointer-events-none', !o); dlg.setAttribute('aria-hidden', !o); };
+
+      let tt;
+      function commit() {
+        if (saving || saved) return;
+        saving = true; validate();
+        $('save-label').textContent = 'Saving…';
+        $('save-icon').className = 'fa-solid fa-circle-notch fa-spin text-[15px]';
+        setTimeout(() => {
+          saving = false; saved = true; validate();
+          $('save-label').textContent = 'Saved';
+          $('save-icon').className = 'fa-solid fa-check text-[15px]';
+          const t = $('toast'); t.classList.remove('opacity-0', 'translate-y-3');
+          clearTimeout(tt); tt = setTimeout(() => t.classList.add('opacity-0', 'translate-y-3'), 3500);
+        }, 600);
+      }
+
+      $('weight-form').addEventListener('submit', e => {
+        e.preventDefault();
+        if (save.disabled) return;
+        const v = value();
+        if (Math.abs(v - previous.kg) >= BIG_CHANGE) {
+          $('confirm-text').textContent = `${v.toFixed(1)} kg is quite different from Emma's previous ${previous.kg.toFixed(1)} kg. Is that right?`;
+          openConfirm(true);
+          return;
+        }
+        commit();
+      });
+      $('confirm-edit').addEventListener('click', () => { openConfirm(false); input.focus(); });
+      $('confirm-backdrop').addEventListener('click', () => openConfirm(false));
+      $('confirm-save').addEventListener('click', () => { openConfirm(false); commit(); });
+
+      validate();
+    })();
+  </script>
+</body>
+</html>
