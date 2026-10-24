@@ -182,17 +182,22 @@ async function upsertLocal(
   const sql = `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${placeholders})
     ON CONFLICT(id) DO UPDATE SET ${updates}`;
 
-  for (const row of rows) {
-    const id = String(row.id);
-    const pending = await db.getFirstAsync(
-      "SELECT 1 AS found FROM sync_outbox WHERE entity_type = ? AND entity_id = ?",
-      [PULL_ENTITY[table], id],
-    );
-    if (pending) continue;
+  if (rows.length === 0) return;
 
-    await db.runAsync(
-      sql,
-      columns.map((c) => (row[c] ?? null) as string | number | null),
-    );
-  }
+  const pendingRows = await db.getAllAsync<{ entity_id: string }>(
+    "SELECT entity_id FROM sync_outbox WHERE entity_type = ?",
+    [PULL_ENTITY[table]],
+  );
+  const pending = new Set(pendingRows.map((r) => r.entity_id));
+
+  await db.withTransactionAsync(async () => {
+    for (const row of rows) {
+      if (pending.has(String(row.id))) continue;
+
+      await db.runAsync(
+        sql,
+        columns.map((c) => (row[c] ?? null) as string | number | null),
+      );
+    }
+  });
 }

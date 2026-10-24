@@ -47,10 +47,21 @@ const dayLabel = (minutes: number) => {
   return `${Math.ceil(-minutes / 1440)} days ago`;
 };
 
-const ageLabel = (ageDays: number) => {
-  const months = Math.floor(ageDays / 30.4);
-  if (months < 1) return `${Math.floor(ageDays / 7)} weeks old`;
-  return `${months} ${months === 1 ? "month" : "months"} old`;
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
+
+const ageLabel = (dob: Date, now: Date) => {
+  let months =
+    (now.getFullYear() - dob.getFullYear()) * 12 +
+    (now.getMonth() - dob.getMonth());
+  if (now.getDate() < dob.getDate()) months--;
+  const anchor = new Date(
+    dob.getFullYear(),
+    dob.getMonth() + months,
+    dob.getDate(),
+  );
+  const days = Math.round((now.getTime() - anchor.getTime()) / DAY_MS);
+  if (months < 1) return `${plural(days, "day")} old`;
+  return `${plural(months, "month")}, ${plural(days, "day")} old`;
 };
 
 const greetingFor = (
@@ -171,10 +182,12 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      const refresh = () =>
+      const refresh = () => {
+        loadDashboard(db).then(setData);
         syncOutbox(db)
           .then(() => loadDashboard(db))
           .then(setData);
+      };
       refresh();
       const timer = setInterval(refresh, SYNC_INTERVAL_MS);
       return () => clearInterval(timer);
@@ -245,8 +258,8 @@ export default function HomeScreen() {
             <Text style={styles.name}>{BABY.name}</Text>
             <Text style={styles.meta}>
               {BABY.weightKg > 0
-                ? `${ageLabel(ageDays)} · ${BABY.weightKg.toFixed(1)} kg`
-                : ageLabel(ageDays)}
+                ? `${ageLabel(parseDate(BABY.dob), now)} · ${BABY.weightKg.toFixed(1)} kg`
+                : ageLabel(parseDate(BABY.dob), now)}
             </Text>
           </View>
           <View style={styles.avatarRing}>
