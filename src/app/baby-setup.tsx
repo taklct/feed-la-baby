@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS } from "../constants/theme";
 import { createBaby } from "../db/babies";
+import { useI18n } from "../i18n/i18n";
 
 type Status = "idle" | "creating" | "created";
 
@@ -47,6 +48,7 @@ const sampleDobString = (today: string) => {
 };
 
 export default function BabySetupScreen() {
+  const { t } = useI18n();
   const today = todayString();
 
   const [name, setName] = useState(SAMPLE_NAME);
@@ -90,16 +92,16 @@ export default function BabySetupScreen() {
       router.replace("/home");
     } catch {
       setStatus("idle");
-      Alert.alert("Could not save", "Please try again.");
+      Alert.alert(t("common.couldNotSave"), t("common.tryAgain"));
     }
   };
 
   const buttonLabel =
     status === "creating"
-      ? "Creating profile…"
+      ? t("setup.creating")
       : status === "created"
-        ? "Profile created"
-        : "Create Baby Profile";
+        ? t("setup.created")
+        : t("setup.create");
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -124,17 +126,15 @@ export default function BabySetupScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Let's get to know your baby</Text>
-        <Text style={styles.subtitle}>
-          A few details will help us personalize your baby's feeding guidance.
-        </Text>
+        <Text style={styles.title}>{t("setup.title")}</Text>
+        <Text style={styles.subtitle}>{t("setup.subtitle")}</Text>
 
         <View style={styles.form}>
-          <Field label="Baby's name">
+          <Field label={t("setup.nameLabel")}>
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Enter baby's name"
+              placeholder={t("setup.namePlaceholder")}
               placeholderTextColor={COLORS.placeholder}
               autoCapitalize="words"
               autoCorrect={false}
@@ -144,12 +144,8 @@ export default function BabySetupScreen() {
           </Field>
 
           <Field
-            label="Date of birth"
-            notice={
-              dobNotice
-                ? "Birth dates can't be in the future, so we set it to today."
-                : undefined
-            }
+            label={t("setup.dobLabel")}
+            notice={dobNotice ? t("setup.dobNotice") : undefined}
           >
             <View style={styles.inputWrap}>
               <TextInput
@@ -174,7 +170,7 @@ export default function BabySetupScreen() {
           <View>
             <View style={styles.weightRow}>
               <View style={styles.weightColumn}>
-                <Text style={styles.label}>Current weight</Text>
+                <Text style={styles.label}>{t("setup.weightLabel")}</Text>
                 <View style={styles.inputWrap}>
                   <TextInput
                     value={weight}
@@ -193,7 +189,7 @@ export default function BabySetupScreen() {
 
               {hasWeight ? (
                 <View style={styles.weightColumn}>
-                  <Text style={styles.label}>Weight measured on</Text>
+                  <Text style={styles.label}>{t("setup.weightDateLabel")}</Text>
                   <View style={styles.inputWrap}>
                     <TextInput
                       value={weightDate}
@@ -217,9 +213,7 @@ export default function BabySetupScreen() {
                 </View>
               ) : null}
             </View>
-            <Text style={styles.helper}>
-              Optional · You can update this anytime.
-            </Text>
+            <Text style={styles.helper}>{t("setup.optional")}</Text>
           </View>
         </View>
       </ScrollView>
@@ -243,11 +237,7 @@ export default function BabySetupScreen() {
             color="#FFFFFF"
           />
         </Pressable>
-        {!canCreate ? (
-          <Text style={styles.hint}>
-            Add your baby's name and date of birth to continue.
-          </Text>
-        ) : null}
+        {!canCreate ? <Text style={styles.hint}>{t("setup.hint")}</Text> : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Join an existing baby profile"
@@ -257,9 +247,7 @@ export default function BabySetupScreen() {
             pressed && styles.buttonPressed,
           ]}
         >
-          <Text style={styles.joinLinkText}>
-            Already have an invite? Join a baby profile
-          </Text>
+          <Text style={styles.joinLinkText}>{t("setup.joinLink")}</Text>
         </Pressable>
       </View>
 

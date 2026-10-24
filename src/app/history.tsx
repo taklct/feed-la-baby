@@ -23,6 +23,9 @@ import { TYPE_STYLE, type RecordType } from "../constants/records";
 import { COLORS, FONTS } from "../constants/theme";
 import { deleteActivity, updateActivity } from "../db/activities";
 import { loadHistory, type HistoryData, type HistoryRow } from "../db/history";
+import { formatClock, formatDate } from "../i18n/format";
+import { useI18n } from "../i18n/i18n";
+import { LEVEL_KEYS, type Lang, type MessageKey } from "../i18n/messages";
 
 type IconName = ComponentProps<typeof FontAwesome6>["name"];
 type FilterKey = "all" | "milk" | "diaper" | "bath";
@@ -50,27 +53,11 @@ type EditDraft = {
   bath: boolean;
 };
 
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "milk", label: "Milk" },
-  { key: "diaper", label: "Diaper" },
-  { key: "bath", label: "Bath" },
-];
-
-const LEVEL_NAMES = ["", "A little", "Light", "Medium", "Heavy", "A lot"];
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+const FILTERS: { key: FilterKey; label: MessageKey }[] = [
+  { key: "all", label: "history.filterAll" },
+  { key: "milk", label: "common.milk" },
+  { key: "diaper", label: "history.filterDiaper" },
+  { key: "bath", label: "common.bath" },
 ];
 
 const startOfDay = (date: Date) =>
@@ -79,14 +66,10 @@ const startOfDay = (date: Date) =>
 const sameDay = (a: Date, b: Date) =>
   startOfDay(a).getTime() === startOfDay(b).getTime();
 
-const clockLabel = (date: Date) => {
-  const hour = date.getHours();
-  const minute = String(date.getMinutes()).padStart(2, "0");
-  return `${hour % 12 || 12}:${minute} ${hour < 12 ? "AM" : "PM"}`;
-};
+const clockLabel = (date: Date, lang: Lang) =>
+  formatClock(date.getHours(), date.getMinutes(), lang);
 
-const dateLabel = (date: Date) =>
-  `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+const dateLabel = (date: Date, lang: Lang) => formatDate(date, lang, true);
 
 const toRecord = (row: HistoryRow): HistoryRecord => ({
   id: row.id,
@@ -163,7 +146,7 @@ function LevelBadge({ type, level }: { type: RecordType; level: number }) {
   const style = TYPE_STYLE[type];
   return (
     <View
-      accessibilityLabel={`Level ${level} · ${LEVEL_NAMES[level]}`}
+      accessibilityLabel={`Level ${level}`}
       style={[styles.badge, { backgroundColor: style.tint }]}
     >
       <Text style={[styles.badgeText, { color: style.ink }]}>{level}</Text>
@@ -178,6 +161,7 @@ function Dash() {
 export default function HistoryScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
+  const { t, lang } = useI18n();
   const today = startOfDay(new Date());
   const [selected, setSelected] = useState(today);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -259,7 +243,9 @@ export default function HistoryScreen() {
     const style = TYPE_STYLE[type];
     return (
       <View key={type} style={styles.block}>
-        <Text style={styles.blockLabel}>{`${style.label} level`}</Text>
+        <Text style={styles.blockLabel}>
+          {t("add.levelTitle", { type: t(style.label) })}
+        </Text>
         <View style={styles.levelRow}>
           {LEVEL_VALUES.map((n) => {
             const on = value === n;
@@ -282,7 +268,7 @@ export default function HistoryScreen() {
           })}
         </View>
         <Text style={[styles.levelName, { color: style.ink }]}>
-          {LEVEL_NAMES[value ?? 0]}
+          {value ? t(LEVEL_KEYS[value as keyof typeof LEVEL_KEYS]) : ""}
         </Text>
       </View>
     );
@@ -299,7 +285,7 @@ export default function HistoryScreen() {
         occurredAt: editing.t.getTime(),
       });
     } catch {
-      Alert.alert("Could not save", "Please try again.");
+      Alert.alert(t("common.couldNotSave"), t("common.tryAgain"));
       return;
     }
     setEditing(null);
@@ -311,7 +297,7 @@ export default function HistoryScreen() {
     try {
       await deleteActivity(db, editing.id);
     } catch {
-      Alert.alert("Could not delete", "Please try again.");
+      Alert.alert(t("common.couldNotDelete"), t("common.tryAgain"));
       return;
     }
     setEditing(null);
@@ -348,17 +334,17 @@ export default function HistoryScreen() {
   const poopCount = dayRecords.filter((r) => r.poop !== null).length;
   const bathCount = dayRecords.filter((r) => r.bath).length;
 
-  const filterLabel = FILTERS.find(
-    (f) => f.key === filter,
-  )?.label.toLowerCase();
+  const filterLabel = t(
+    FILTERS.find((f) => f.key === filter)?.label ?? "history.filterAll",
+  ).toLowerCase();
   const emptyTitle =
     dayRecords.length > 0 && filter !== "all"
-      ? `No ${filterLabel} records on this day`
-      : "No activities recorded";
+      ? t("history.noneForFilter", { filter: filterLabel })
+      : t("history.noActivities");
   const emptyText =
     dayRecords.length > 0 && filter !== "all"
-      ? "Try another filter or pick a different date."
-      : "Your baby's daily records will appear here.";
+      ? t("history.tryOther")
+      : t("history.emptyHint");
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -369,9 +355,9 @@ export default function HistoryScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>History</Text>
+        <Text style={styles.title}>{t("history.title")}</Text>
         <Text style={styles.subtitle}>
-          {`${data.babyName}'s daily activities`}
+          {t("history.subtitle", { name: data.babyName })}
         </Text>
 
         <View style={styles.dateRow}>
@@ -402,11 +388,11 @@ export default function HistoryScreen() {
           >
             <FontAwesome6 name="calendar" size={13} color={COLORS.blue700} />
             <Text style={styles.dateText} numberOfLines={1}>
-              {dateLabel(selected)}
+              {dateLabel(selected, lang)}
             </Text>
             {isToday ? (
               <View style={styles.todayTag}>
-                <Text style={styles.todayTagText}>Today</Text>
+                <Text style={styles.todayTagText}>{t("common.today")}</Text>
               </View>
             ) : null}
           </Pressable>
@@ -445,15 +431,30 @@ export default function HistoryScreen() {
             type="milk"
             value={milkTotal}
             unit="ml"
-            label={`Milk · ${milkRecords.length} ${milkRecords.length === 1 ? "feed" : "feeds"}`}
+            label={t("history.milkSummary", {
+              count: milkRecords.length,
+              unit: t(
+                milkRecords.length === 1 ? "unit.feed.one" : "unit.feed.other",
+              ),
+            })}
             divider={false}
           />
-          <SummaryCell type="pee" value={peeCount} label="Pee" divider />
-          <SummaryCell type="poop" value={poopCount} label="Poop" divider />
+          <SummaryCell
+            type="pee"
+            value={peeCount}
+            label={t("common.pee")}
+            divider
+          />
+          <SummaryCell
+            type="poop"
+            value={poopCount}
+            label={t("common.poop")}
+            divider
+          />
           <SummaryCell
             type="bath"
             value={bathCount}
-            label={bathCount === 1 ? "Bath" : "Baths"}
+            label={bathCount === 1 ? t("common.bath") : t("common.baths")}
             divider
           />
         </View>
@@ -470,7 +471,7 @@ export default function HistoryScreen() {
                 style={[styles.filterButton, on && styles.filterButtonOn]}
               >
                 <Text style={[styles.filterText, on && styles.filterTextOn]}>
-                  {f.label}
+                  {t(f.label)}
                 </Text>
               </Pressable>
             );
@@ -482,7 +483,7 @@ export default function HistoryScreen() {
             <View style={styles.tableCard}>
               <View style={styles.tableHead}>
                 <View style={[styles.timeCell, { flex: 26 }]}>
-                  <Text style={styles.headTime}>Time</Text>
+                  <Text style={styles.headTime}>{t("home.time")}</Text>
                 </View>
                 {(["milk", "pee", "poop", "bath"] as RecordType[]).map(
                   (type) => (
@@ -508,7 +509,7 @@ export default function HistoryScreen() {
                           { color: TYPE_STYLE[type].ink },
                         ]}
                       >
-                        {TYPE_STYLE[type].label}
+                        {t(TYPE_STYLE[type].label)}
                       </Text>
                     </View>
                   ),
@@ -519,7 +520,7 @@ export default function HistoryScreen() {
                 <Pressable
                   key={r.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`Edit record at ${clockLabel(r.t)}`}
+                  accessibilityLabel={`Edit record at ${clockLabel(r.t, lang)}`}
                   onPress={() => openEdit(r)}
                   style={({ pressed }) => [
                     styles.tableRow,
@@ -528,7 +529,7 @@ export default function HistoryScreen() {
                   ]}
                 >
                   <View style={[styles.timeCell, { flex: 26 }]}>
-                    <Text style={styles.timeText}>{clockLabel(r.t)}</Text>
+                    <Text style={styles.timeText}>{clockLabel(r.t, lang)}</Text>
                   </View>
                   <View style={[styles.centerCell, { flex: 22 }]}>
                     {r.milk !== null ? (
@@ -582,9 +583,7 @@ export default function HistoryScreen() {
                 size={11}
                 color={COLORS.muted}
               />
-              <Text style={styles.hintText}>
-                Pee & Poop show level 1–5 · Tap a row to edit
-              </Text>
+              <Text style={styles.hintText}>{t("history.tableHint")}</Text>
             </View>
           </>
         ) : (
@@ -632,11 +631,16 @@ export default function HistoryScreen() {
             <View style={styles.sheetHeader}>
               <View>
                 <Text style={styles.sheetTitle}>
-                  {confirmDelete ? "Delete this record?" : "Edit Record"}
+                  {confirmDelete
+                    ? t("history.deleteQuestion")
+                    : t("history.editTitle")}
                 </Text>
                 {editing ? (
                   <Text style={styles.sheetSub}>
-                    {`Recorded ${dateLabel(editing.t)} · ${clockLabel(editing.t)}`}
+                    {t("history.recordedOn", {
+                      date: dateLabel(editing.t, lang),
+                      time: clockLabel(editing.t, lang),
+                    })}
                   </Text>
                 ) : null}
               </View>
@@ -653,7 +657,7 @@ export default function HistoryScreen() {
             {confirmDelete ? (
               <>
                 <Text style={styles.confirmText}>
-                  This record will be removed from the history.
+                  {t("history.deleteBody")}
                 </Text>
                 <View style={styles.confirmRow}>
                   <Pressable
@@ -661,14 +665,18 @@ export default function HistoryScreen() {
                     onPress={() => setConfirmDelete(false)}
                     style={[styles.confirmButton, styles.confirmCancel]}
                   >
-                    <Text style={styles.confirmCancelText}>Cancel</Text>
+                    <Text style={styles.confirmCancelText}>
+                      {t("common.cancel")}
+                    </Text>
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
                     onPress={removeRecord}
                     style={[styles.confirmButton, styles.confirmDanger]}
                   >
-                    <Text style={styles.confirmDangerText}>Delete</Text>
+                    <Text style={styles.confirmDangerText}>
+                      {t("common.delete")}
+                    </Text>
                   </Pressable>
                 </View>
               </>
@@ -708,7 +716,7 @@ export default function HistoryScreen() {
                               on && { color: style.ink },
                             ]}
                           >
-                            {style.label}
+                            {t(style.label)}
                           </Text>
                         </Pressable>
                       );
@@ -718,7 +726,7 @@ export default function HistoryScreen() {
                   {draft.milk !== null ? (
                     <View style={styles.block}>
                       <Text style={styles.blockLabel}>
-                        Milk · Amount consumed
+                        {t("history.milkAmount")}
                       </Text>
                       <View style={styles.amountRow}>
                         <TextInput
@@ -733,7 +741,10 @@ export default function HistoryScreen() {
                       </View>
                       {!draftMilkValid ? (
                         <Text style={styles.errorText}>
-                          {`Enter ${MIN_ML}–${MAX_ML} ml`}
+                          {t("history.amountRange", {
+                            min: MIN_ML,
+                            max: MAX_ML,
+                          })}
                         </Text>
                       ) : null}
                     </View>
@@ -742,7 +753,7 @@ export default function HistoryScreen() {
                   {draft.poop !== null ? levelBlock("poop") : null}
                   {draftEmpty ? (
                     <Text style={styles.emptyNote}>
-                      Select at least one activity, or delete this record.
+                      {t("history.selectOne")}
                     </Text>
                   ) : null}
                 </ScrollView>
@@ -757,7 +768,7 @@ export default function HistoryScreen() {
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text style={styles.saveText}>Save Changes</Text>
+                  <Text style={styles.saveText}>{t("common.saveChanges")}</Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -765,7 +776,9 @@ export default function HistoryScreen() {
                   style={styles.deleteButton}
                 >
                   <FontAwesome6 name="trash-can" size={14} color={DANGER} />
-                  <Text style={styles.deleteText}>Delete Record</Text>
+                  <Text style={styles.deleteText}>
+                    {t("history.deleteRecord")}
+                  </Text>
                 </Pressable>
               </>
             )}

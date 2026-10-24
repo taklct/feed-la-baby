@@ -7,6 +7,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { Suspense } from "react";
+import { LanguageProvider } from "../i18n/i18n";
 import { DATABASE_NAME, initDatabase } from "../db/database";
 
 export default function RootLayout() {
@@ -25,7 +26,9 @@ export default function RootLayout() {
         onInit={initDatabase}
         useSuspense
       >
-        <Stack screenOptions={{ headerShown: false }} />
+        <LanguageProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </LanguageProvider>
       </SQLiteProvider>
     </Suspense>
   );

@@ -20,11 +20,14 @@ import {
   type DashboardData,
   type LogRecord,
 } from "../db/dashboard";
+import { formatClock } from "../i18n/format";
+import { useI18n, type TranslateFn } from "../i18n/i18n";
+import type { Lang, MessageKey } from "../i18n/messages";
+import { ageLabel } from "../utils/dates";
 
 type IconName = ComponentProps<typeof FontAwesome6>["name"];
 
-const AVATAR_URI =
-  "https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_49e74a202d_f11d635521932c72.png";
+const AVATAR_SOURCE = require("../../assets/profile-icon.png");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SYNC_INTERVAL_MS = 30 * 1000;
@@ -34,43 +37,30 @@ const parseDate = (value: string) => {
   return new Date(year, month - 1, day);
 };
 
-const formatTime = (minutes: number) => {
+const formatTime = (minutes: number, lang: Lang) => {
   const m = ((minutes % 1440) + 1440) % 1440;
-  const hour = Math.floor(m / 60);
-  const minute = String(m % 60).padStart(2, "0");
-  return `${hour % 12 || 12}:${minute} ${hour < 12 ? "AM" : "PM"}`;
+  return formatClock(Math.floor(m / 60), m % 60, lang);
 };
 
-const dayLabel = (minutes: number) => {
-  if (minutes >= 0) return "Today";
-  if (minutes >= -1440) return "Yesterday";
-  return `${Math.ceil(-minutes / 1440)} days ago`;
-};
-
-const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
-
-const ageLabel = (dob: Date, now: Date) => {
-  let months =
-    (now.getFullYear() - dob.getFullYear()) * 12 +
-    (now.getMonth() - dob.getMonth());
-  if (now.getDate() < dob.getDate()) months--;
-  const anchor = new Date(
-    dob.getFullYear(),
-    dob.getMonth() + months,
-    dob.getDate(),
-  );
-  const days = Math.round((now.getTime() - anchor.getTime()) / DAY_MS);
-  if (months < 1) return `${plural(days, "day")} old`;
-  return `${plural(months, "month")}, ${plural(days, "day")} old`;
+const dayLabel = (minutes: number, t: TranslateFn) => {
+  if (minutes >= 0) return t("common.today");
+  if (minutes >= -1440) return t("common.yesterday");
+  return t("common.daysAgo", { n: Math.ceil(-minutes / 1440) });
 };
 
 const greetingFor = (
   hour: number,
+  t: TranslateFn,
 ): { text: string; icon: IconName; color: string } => {
-  if (hour < 12) return { text: "Good morning", icon: "sun", color: "#E0A63B" };
+  if (hour < 12)
+    return { text: t("home.goodMorning"), icon: "sun", color: "#E0A63B" };
   if (hour < 18)
-    return { text: "Good afternoon", icon: "cloud-sun", color: "#E0A63B" };
-  return { text: "Good evening", icon: "moon", color: "#8B87B5" };
+    return {
+      text: t("home.goodAfternoon"),
+      icon: "cloud-sun",
+      color: "#E0A63B",
+    };
+  return { text: t("home.goodEvening"), icon: "moon", color: "#8B87B5" };
 };
 
 // 100–150 ml per kg, capped at 1000 ml, rounded to 10 ml.
@@ -81,11 +71,17 @@ const milkReference = (weightKg: number) => {
 };
 
 // Average gap between the four most recent milk feeds, rounded to 15 min.
-const nextFeed = (records: LogRecord[], ageDays: number, name: string) => {
+const nextFeed = (
+  records: LogRecord[],
+  ageDays: number,
+  name: string,
+  t: TranslateFn,
+  lang: Lang,
+) => {
   if (ageDays < 28) {
     return {
-      time: "Feed on cue",
-      detail: "Next-feed estimates start once your baby is 4 weeks old.",
+      time: t("home.feedOnCue"),
+      detail: t("home.feedOnCueDetail"),
       compact: true,
     };
   }
@@ -94,8 +90,8 @@ const nextFeed = (records: LogRecord[], ageDays: number, name: string) => {
     .sort((a, b) => b.t - a.t);
   if (feeds.length < 3) {
     return {
-      time: "Not enough feeding history yet",
-      detail: "Log a few more feeds to see an estimate.",
+      time: t("home.notEnoughHistory"),
+      detail: t("home.notEnoughHistoryDetail"),
       compact: true,
     };
   }
@@ -104,8 +100,11 @@ const nextFeed = (records: LogRecord[], ageDays: number, name: string) => {
   const average = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
   const next = Math.round((recent[0].t + average) / 15) * 15;
   return {
-    time: `Around ${formatTime(next)}`,
-    detail: `Last fed at ${formatTime(recent[0].t)} · Based on ${name}'s recent feeding pattern.`,
+    time: t("home.aroundTime", { time: formatTime(next, lang) }),
+    detail: t("home.lastFedDetail", {
+      time: formatTime(recent[0].t, lang),
+      name,
+    }),
     compact: false,
   };
 };
@@ -159,11 +158,11 @@ function NavTab({
   );
 }
 
-const TABLE_COLUMNS: { type: RecordType; label: string }[] = [
-  { type: "milk", label: "Milk" },
-  { type: "pee", label: "Pee" },
-  { type: "poop", label: "Poop" },
-  { type: "bath", label: "Bath" },
+const TABLE_COLUMNS: { type: RecordType; label: MessageKey }[] = [
+  { type: "milk", label: "common.milk" },
+  { type: "pee", label: "common.pee" },
+  { type: "poop", label: "common.poop" },
+  { type: "bath", label: "common.bath" },
 ];
 
 function LevelBadge({ type, value }: { type: RecordType; value: number }) {
@@ -178,6 +177,7 @@ function LevelBadge({ type, value }: { type: RecordType; value: number }) {
 export default function HomeScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
+  const { t, lang } = useI18n();
   const [data, setData] = useState<DashboardData | null>(null);
 
   useFocusEffect(
@@ -203,27 +203,30 @@ export default function HomeScreen() {
   const ageDays = Math.floor(
     (now.getTime() - parseDate(BABY.dob).getTime()) / DAY_MS,
   );
-  const greeting = greetingFor(now.getHours());
+  const greeting = greetingFor(now.getHours(), t);
+  const ageText = t("age.old", {
+    age: ageLabel(parseDate(BABY.dob), now, t),
+  });
   const eligible =
     BABY.premature === "no" && BABY.doctorPlan === "no" && BABY.weightKg > 0;
-  const feed = nextFeed(RECORDS, ageDays, BABY.name);
+  const feed = nextFeed(RECORDS, ageDays, BABY.name, t, lang);
   const milkRef = milkReference(BABY.weightKg);
 
   const guide = eligible
     ? {
-        label: "Daily Milk Reference",
+        label: t("home.dailyMilkRef"),
         value: `~${milkRef.min}–${milkRef.max}`,
         unit: "ml/day",
-        text: `General formula reference based on ${BABY.name}'s age and weight.`,
+        text: t("home.milkRefText", { name: BABY.name }),
       }
     : {
-        label: "General Feeding Guidance",
-        value: "Every 2–4 hrs",
+        label: t("home.generalGuidance"),
+        value: t("home.every2to4"),
         unit: "",
         text:
           BABY.doctorPlan === "yes"
-            ? `Follow the feeding plan from ${BABY.name}'s doctor.`
-            : `Typical rhythm at this age. Add ${BABY.name}'s weight in her profile for a personalized reference.`,
+            ? t("home.doctorPlanText", { name: BABY.name })
+            : t("home.typicalRhythm", { name: BABY.name }),
       };
 
   const today = RECORDS.filter((r) => r.t >= 0);
@@ -258,13 +261,13 @@ export default function HomeScreen() {
             <Text style={styles.name}>{BABY.name}</Text>
             <Text style={styles.meta}>
               {BABY.weightKg > 0
-                ? `${ageLabel(parseDate(BABY.dob), now)} · ${BABY.weightKg.toFixed(1)} kg`
-                : ageLabel(parseDate(BABY.dob), now)}
+                ? `${ageText} · ${BABY.weightKg.toFixed(1)} kg`
+                : ageText}
             </Text>
           </View>
           <View style={styles.avatarRing}>
             <Image
-              source={{ uri: AVATAR_URI }}
+              source={AVATAR_SOURCE}
               style={styles.avatar}
               contentFit="cover"
               accessibilityLabel={`${BABY.name}'s photo`}
@@ -279,7 +282,7 @@ export default function HomeScreen() {
               <RecordIcon type="milk" color={COLORS.blue700} size={18} />
             </View>
             <Text style={styles.guideTitle}>
-              {`${BABY.name}'s Feeding Guide`}
+              {t("home.feedingGuide", { name: BABY.name })}
             </Text>
           </View>
           <Text style={styles.guideLabel}>{guide.label}</Text>
@@ -296,9 +299,7 @@ export default function HomeScreen() {
           <Text style={styles.guideText}>{guide.text}</Text>
           <View style={styles.guideNote}>
             <FontAwesome6 name="heart" size={11} color={COLORS.blue600} />
-            <Text style={styles.guideNoteText}>
-              Follow your baby's hunger and fullness cues.
-            </Text>
+            <Text style={styles.guideNoteText}>{t("home.cueNote")}</Text>
           </View>
         </View>
 
@@ -307,7 +308,7 @@ export default function HomeScreen() {
             <FontAwesome6 name="clock" size={20} color={COLORS.blue700} />
           </View>
           <View style={styles.nextBody}>
-            <Text style={styles.nextLabel}>Expected Next Feed</Text>
+            <Text style={styles.nextLabel}>{t("home.expectedNext")}</Text>
             <Text
               style={[styles.nextTime, feed.compact && styles.nextTimeCompact]}
             >
@@ -318,7 +319,7 @@ export default function HomeScreen() {
         </View>
 
         <Text style={[styles.sectionTitle, styles.sectionSpacing]}>
-          Today's Overview
+          {t("home.todayOverview")}
         </Text>
         <View style={styles.grid}>
           <StatCard
@@ -332,11 +333,11 @@ export default function HomeScreen() {
               <Text style={styles.statUnit}> ml</Text>
             </Text>
             <Text style={styles.statLabel}>
-              Milk Consumed <Text style={styles.statDot}>·</Text>{" "}
+              {t("home.milkConsumed")} <Text style={styles.statDot}>·</Text>{" "}
               <Text
                 style={[styles.statHighlight, { color: TYPE_STYLE.milk.ink }]}
               >
-                {`${milk.length} ${milk.length === 1 ? "feed" : "feeds"}`}
+                {`${milk.length} ${t(milk.length === 1 ? "unit.feed.one" : "unit.feed.other")}`}
               </Text>
             </Text>
           </StatCard>
@@ -348,7 +349,7 @@ export default function HomeScreen() {
             }
           >
             <Text style={styles.statValue}>{countToday("pee")}</Text>
-            <Text style={styles.statLabel}>Pee</Text>
+            <Text style={styles.statLabel}>{t("common.pee")}</Text>
           </StatCard>
 
           <StatCard
@@ -358,7 +359,7 @@ export default function HomeScreen() {
             }
           >
             <Text style={styles.statValue}>{countToday("poop")}</Text>
-            <Text style={styles.statLabel}>Poop</Text>
+            <Text style={styles.statLabel}>{t("common.poop")}</Text>
           </StatCard>
 
           <StatCard
@@ -368,14 +369,14 @@ export default function HomeScreen() {
             }
           >
             <Text style={styles.statValueSmall}>
-              {lastBath ? dayLabel(lastBath.t) : "None yet"}
+              {lastBath ? dayLabel(lastBath.t, t) : t("common.none")}
             </Text>
             <Text style={styles.statLabel}>
-              Last Bath <Text style={styles.statDot}>·</Text>{" "}
+              {t("home.lastBath")} <Text style={styles.statDot}>·</Text>{" "}
               <Text
                 style={[styles.statHighlight, { color: TYPE_STYLE.bath.ink }]}
               >
-                {lastBath ? formatTime(lastBath.t) : "—"}
+                {lastBath ? formatTime(lastBath.t, lang) : "—"}
               </Text>
             </Text>
           </StatCard>
@@ -391,13 +392,13 @@ export default function HomeScreen() {
           ]}
         >
           <FontAwesome6 name="plus" size={15} color="#FFFFFF" />
-          <Text style={styles.primaryButtonText}>Add Record</Text>
+          <Text style={styles.primaryButtonText}>{t("home.addRecord")}</Text>
         </Pressable>
 
         <View style={[styles.sectionHeader, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Recent Activities</Text>
+          <Text style={styles.sectionTitle}>{t("home.recentActivities")}</Text>
           <Pressable accessibilityRole="button" style={styles.viewAll}>
-            <Text style={styles.viewAllText}>View All</Text>
+            <Text style={styles.viewAllText}>{t("home.viewAll")}</Text>
             <FontAwesome6 name="arrow-right" size={11} color={COLORS.blue700} />
           </Pressable>
         </View>
@@ -406,7 +407,7 @@ export default function HomeScreen() {
           <View style={styles.list}>
             <View style={[styles.tableRow, styles.tableHead]}>
               <View style={styles.timeCell}>
-                <Text style={styles.headText}>Time</Text>
+                <Text style={styles.headText}>{t("home.time")}</Text>
               </View>
               {TABLE_COLUMNS.map((column) => (
                 <View key={column.type} style={styles.cell}>
@@ -416,7 +417,7 @@ export default function HomeScreen() {
                       { color: TYPE_STYLE[column.type].ink },
                     ]}
                   >
-                    {column.label}
+                    {t(column.label)}
                   </Text>
                 </View>
               ))}
@@ -428,7 +429,9 @@ export default function HomeScreen() {
               >
                 <View style={styles.timeCell}>
                   <Text style={styles.timeText}>
-                    {`${row.t < 0 ? "Yesterday, " : ""}${formatTime(row.t)}`}
+                    {row.t < 0
+                      ? t("home.yesterdayAt", { time: formatTime(row.t, lang) })
+                      : formatTime(row.t, lang)}
                   </Text>
                 </View>
                 <View style={styles.cell}>
@@ -478,26 +481,24 @@ export default function HomeScreen() {
             <View style={styles.emptyIcon}>
               <FontAwesome6 name="heart" size={18} color={COLORS.blue700} />
             </View>
-            <Text
-              style={styles.emptyTitle}
-            >{`A fresh new day with ${BABY.name}`}</Text>
-            <Text style={styles.emptyText}>
-              Tap Add Record to log her first feed, diaper or bath.
+            <Text style={styles.emptyTitle}>
+              {t("home.freshDay", { name: BABY.name })}
             </Text>
+            <Text style={styles.emptyText}>{t("home.emptyDay")}</Text>
           </View>
         )}
       </ScrollView>
 
       <View style={styles.nav}>
-        <NavTab icon="house" label="Home" active />
+        <NavTab icon="house" label={t("nav.home")} active />
         <NavTab
           icon="clock-rotate-left"
-          label="History"
+          label={t("nav.history")}
           onPress={() => router.navigate("/history")}
         />
         <NavTab
           icon="baby"
-          label="Baby"
+          label={t("nav.baby")}
           onPress={() => router.navigate("/baby-profile")}
         />
       </View>

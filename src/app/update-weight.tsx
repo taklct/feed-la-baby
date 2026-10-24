@@ -19,6 +19,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS } from "../constants/theme";
 import { addWeight, loadBabyProfile, type BabyProfile } from "../db/babies";
+import { formatDate } from "../i18n/format";
+import { useI18n } from "../i18n/i18n";
+import { type Lang } from "../i18n/messages";
 import { ageLabel, parseDate, toDateString } from "../utils/dates";
 
 const MIN_KG = 1;
@@ -27,29 +30,13 @@ const STEP_KG = 0.1;
 const BIG_CHANGE_KG = 1;
 const WARM = "#A0703F";
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
 const startOfDay = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 const sameDay = (a: Date, b: Date) =>
   startOfDay(a).getTime() === startOfDay(b).getTime();
 
-const dateLabel = (date: Date) =>
-  `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+const dateLabel = (date: Date, lang: Lang) => formatDate(date, lang, true);
 
 const parseKg = (text: string) => {
   const n = parseFloat(text.replace(",", "."));
@@ -80,8 +67,11 @@ export default function UpdateWeightScreen() {
 function WeightForm({ profile }: { profile: BabyProfile }) {
   const router = useRouter();
   const db = useSQLiteContext();
+  const { t, lang } = useI18n();
   const BABY_NAME = profile.name;
-  const BABY_AGE = `${ageLabel(parseDate(profile.dateOfBirth), new Date())} old`;
+  const BABY_AGE = t("age.old", {
+    age: ageLabel(parseDate(profile.dateOfBirth), new Date(), t),
+  });
   const latest = profile.weights[0];
   const PREVIOUS = latest
     ? { kg: latest.kg, date: parseDate(latest.date) }
@@ -95,9 +85,12 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
 
   const kg = parseKg(weightText);
   let error = "";
-  if (kg === null) error = `Enter ${BABY_NAME}'s weight to continue.`;
+  if (kg === null) error = t("weight.enterFirst", { name: BABY_NAME });
   else if (kg < MIN_KG || kg > MAX_KG)
-    error = `Please enter a weight between ${MIN_KG.toFixed(1)} and ${MAX_KG.toFixed(1)} kg.`;
+    error = t("weight.range", {
+      min: MIN_KG.toFixed(1),
+      max: MAX_KG.toFixed(1),
+    });
   const invalid = error !== "";
   const isEarlier =
     PREVIOUS !== null && date.getTime() < PREVIOUS.date.getTime();
@@ -130,7 +123,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
     try {
       await addWeight(db, profile.id, value, toDateString(date));
     } catch {
-      notify("Could not save", "Please try again.");
+      notify(t("common.couldNotSave"), t("common.tryAgain"));
       return;
     }
     router.replace("/home");
@@ -139,14 +132,18 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
   const onSave = () => {
     if (invalid || kg === null) return;
     if (PREVIOUS && Math.abs(kg - PREVIOUS.kg) >= BIG_CHANGE_KG) {
-      const message = `${kg.toFixed(1)} kg is quite different from ${BABY_NAME}'s previous ${PREVIOUS.kg.toFixed(1)} kg. Is that right?`;
+      const message = t("weight.bigChange", {
+        next: kg.toFixed(1),
+        name: BABY_NAME,
+        prev: PREVIOUS.kg.toFixed(1),
+      });
       if (Platform.OS === "web") {
-        if (window.confirm(`Just checking\n\n${message}`)) save(kg);
+        if (window.confirm(`${t("weight.checkTitle")}\n\n${message}`)) save(kg);
         return;
       }
-      Alert.alert("Just checking", message, [
-        { text: "Edit", style: "cancel" },
-        { text: "Save anyway", onPress: () => save(kg) },
+      Alert.alert(t("weight.checkTitle"), message, [
+        { text: t("weight.edit"), style: "cancel" },
+        { text: t("weight.saveAnyway"), onPress: () => save(kg) },
       ]);
       return;
     }
@@ -164,7 +161,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
         >
           <FontAwesome6 name="arrow-left" size={15} color={COLORS.ink} />
         </Pressable>
-        <Text style={styles.title}>Update Weight</Text>
+        <Text style={styles.title}>{t("weight.title")}</Text>
         <View style={styles.iconButtonSpacer} />
       </View>
 
@@ -182,7 +179,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
             <Text style={styles.babyAge}>{BABY_AGE}</Text>
           </View>
           <View style={styles.previousBlock}>
-            <Text style={styles.previousLabel}>Previous weight</Text>
+            <Text style={styles.previousLabel}>{t("weight.previous")}</Text>
             <Text style={styles.previousValue}>
               {PREVIOUS ? PREVIOUS.kg.toFixed(1) : "—"}{" "}
               <Text style={styles.previousUnit}>kg</Text>
@@ -190,7 +187,9 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
           </View>
         </View>
 
-        <Text style={styles.question}>What's {BABY_NAME}'s weight?</Text>
+        <Text style={styles.question}>
+          {t("weight.question", { name: BABY_NAME })}
+        </Text>
 
         <View style={[styles.weightCard, invalid && styles.weightCardInvalid]}>
           <View style={styles.stepperRow}>
@@ -234,12 +233,12 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
             </View>
           ) : (
             <Text style={styles.helpText}>
-              Enter {BABY_NAME}'s most recent measured weight.
+              {t("weight.helper", { name: BABY_NAME })}
             </Text>
           )}
         </View>
 
-        <Text style={styles.fieldLabel}>Measurement Date</Text>
+        <Text style={styles.fieldLabel}>{t("weight.dateTitle")}</Text>
         <Pressable
           accessibilityRole="button"
           onPress={() => setPickerOpen((open) => !open)}
@@ -248,10 +247,10 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
           <View style={styles.calendarIcon}>
             <FontAwesome6 name="calendar" size={14} color={COLORS.blue700} />
           </View>
-          <Text style={styles.dateText}>{dateLabel(date)}</Text>
+          <Text style={styles.dateText}>{dateLabel(date, lang)}</Text>
           {sameDay(date, today) && (
             <View style={styles.todayBadge}>
-              <Text style={styles.todayText}>Today</Text>
+              <Text style={styles.todayText}>{t("common.today")}</Text>
             </View>
           )}
         </Pressable>
@@ -266,9 +265,9 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
         )}
         {isEarlier && PREVIOUS && (
           <Text style={styles.hintText}>
-            This is earlier than the latest weight ({dateLabel(PREVIOUS.date)}),
-            so it will be added to Weight History without replacing the current
-            weight.
+            {t("weight.earlierHint", {
+              date: dateLabel(PREVIOUS.date, lang),
+            })}
           </Text>
         )}
 
@@ -277,10 +276,9 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
             <FontAwesome6 name="heart" size={13} color={COLORS.blue700} />
           </View>
           <View style={styles.infoText}>
-            <Text style={styles.infoTitle}>Growing together</Text>
+            <Text style={styles.infoTitle}>{t("weight.growingTitle")}</Text>
             <Text style={styles.infoBody}>
-              Keeping {BABY_NAME}'s weight updated helps Feedla provide more
-              relevant feeding guidance.
+              {t("weight.growingBody", { name: BABY_NAME })}
             </Text>
           </View>
         </View>
@@ -294,7 +292,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
           style={[styles.saveButton, invalid && styles.saveButtonDisabled]}
         >
           <FontAwesome6 name="check" size={15} color="#FFFFFF" />
-          <Text style={styles.saveText}>Save Weight</Text>
+          <Text style={styles.saveText}>{t("weight.save")}</Text>
         </Pressable>
       </View>
 

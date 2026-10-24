@@ -8,6 +8,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Rect } from "react-native-svg";
 import { loadBabyProfile } from "../db/babies";
+import { useI18n } from "../i18n/i18n";
 import { COLORS, FONTS } from "../constants/theme";
 
 const HERO_IMAGE_URI =
@@ -15,6 +16,7 @@ const HERO_IMAGE_URI =
 
 export default function WelcomeScreen() {
   const db = useSQLiteContext();
+  const { t } = useI18n();
 
   useEffect(() => {
     loadBabyProfile(db).then((baby) => {
@@ -77,27 +79,24 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.copy}>
-          <Text style={styles.title}>Every little feed matters.</Text>
-          <Text style={styles.subtitle}>
-            Track your baby's milk, diapers, and baths with ease. Get
-            personalized feeding guidance as your baby grows.
-          </Text>
+          <Text style={styles.title}>{t("welcome.tagline")}</Text>
+          <Text style={styles.subtitle}>{t("welcome.subtitle")}</Text>
         </View>
 
         <View style={styles.cta}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Get started and set up your baby's profile"
-            onPress={() => router.push("/set-profile")}
+            onPress={() => router.push("/baby-setup")}
             style={({ pressed }) => [
               styles.button,
               pressed && styles.buttonPressed,
             ]}
           >
-            <Text style={styles.buttonText}>Get Started</Text>
+            <Text style={styles.buttonText}>{t("welcome.getStarted")}</Text>
             <FontAwesome6 name="arrow-right" size={15} color="#FFFFFF" />
           </Pressable>
-          <Text style={styles.footer}>Made with love for your little one.</Text>
+          <Text style={styles.footer}>{t("welcome.footer")}</Text>
         </View>
       </View>
 

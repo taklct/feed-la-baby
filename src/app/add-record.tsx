@@ -23,6 +23,10 @@ import { DateTimeWheel } from "../components/datetime-wheel";
 import { TYPE_STYLE, type RecordType } from "../constants/records";
 import { COLORS, FONTS } from "../constants/theme";
 import { createActivity, deleteActivity } from "../db/activities";
+import { loadBabyProfile } from "../db/babies";
+import { formatClock, formatMonthDay } from "../i18n/format";
+import { useI18n, type TranslateFn } from "../i18n/i18n";
+import { LEVEL_KEYS, type Lang } from "../i18n/messages";
 
 const ACTIVITIES: RecordType[] = ["milk", "pee", "poop", "bath"];
 const MIN_ML = 5;
@@ -33,21 +37,8 @@ const SAVE_DELAY_MS = 500;
 const TOAST_MS = 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LEVEL_VALUES = [1, 2, 3, 4, 5] as const;
-const LEVEL_LABELS = ["", "A little", "Light", "Medium", "Heavy", "A lot"];
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const levelText = (n: number, t: TranslateFn) =>
+  t(LEVEL_KEYS[n as keyof typeof LEVEL_KEYS]);
 
 const toggleActivity = (list: RecordType[], type: RecordType) =>
   ACTIVITIES.filter((t) => (t === type ? !list.includes(t) : list.includes(t)));
@@ -55,22 +46,21 @@ const toggleActivity = (list: RecordType[], type: RecordType) =>
 const startOfDay = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
-const clockLabel = (date: Date) => {
-  const hour = date.getHours();
-  const minute = String(date.getMinutes()).padStart(2, "0");
-  return `${hour % 12 || 12}:${minute} ${hour < 12 ? "AM" : "PM"}`;
-};
+const clockLabel = (date: Date, lang: Lang) =>
+  formatClock(date.getHours(), date.getMinutes(), lang);
 
-const dayLabel = (date: Date, now: Date) => {
+const dayLabel = (date: Date, now: Date, t: TranslateFn, lang: Lang) => {
   const days = Math.round((startOfDay(now) - startOfDay(date)) / DAY_MS);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
-  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+  if (days === 0) return t("common.today");
+  if (days === 1) return t("common.yesterday");
+  return formatMonthDay(date, lang);
 };
 
 export default function AddRecordScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
+  const { t, lang } = useI18n();
+  const [babyName, setBabyName] = useState<string | null>(null);
   const savedId = useRef<string | null>(null);
   const [selected, setSelected] = useState<RecordType[]>(["milk", "pee"]);
   const [levels, setLevels] = useState({ pee: 3, poop: 3 });
@@ -89,6 +79,10 @@ export default function AddRecordScreen() {
     },
     [],
   );
+
+  useEffect(() => {
+    loadBabyProfile(db).then((baby) => setBabyName(baby?.name ?? null));
+  }, [db]);
 
   const milkSelected = selected.includes("milk");
   const hasDiaper = selected.includes("pee") || selected.includes("poop");
@@ -137,12 +131,12 @@ export default function AddRecordScreen() {
   const handleSave = () => {
     if (!canSave) return;
     const parts = [
-      milkSelected ? `Milk ${amount} ml` : "",
-      selected.includes("pee") ? `Pee L${levels.pee}` : "",
-      selected.includes("poop") ? `Poop L${levels.poop}` : "",
-      hasBath ? "Bath" : "",
+      milkSelected ? t("add.partMilk", { ml: amount ?? 0 }) : "",
+      selected.includes("pee") ? t("add.partPee", { n: levels.pee }) : "",
+      selected.includes("poop") ? t("add.partPoop", { n: levels.poop }) : "",
+      hasBath ? t("add.partBath") : "",
     ].filter(Boolean);
-    setSavedMessage(`Saved · ${parts.join(" · ")}`);
+    setSavedMessage(t("add.savedMessage", { parts: parts.join(" · ") }));
     setStatus("saving");
     timer.current = setTimeout(async () => {
       try {
@@ -155,7 +149,7 @@ export default function AddRecordScreen() {
         });
       } catch {
         setStatus("idle");
-        Alert.alert("Could not save", "Please try again.");
+        Alert.alert(t("common.couldNotSave"), t("common.tryAgain"));
         return;
       }
       setStatus("saved");
@@ -188,7 +182,7 @@ export default function AddRecordScreen() {
         >
           <FontAwesome6 name="arrow-left" size={15} color={COLORS.ink} />
         </Pressable>
-        <Text style={styles.title}>Add Record</Text>
+        <Text style={styles.title}>{t("add.title")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -198,10 +192,8 @@ export default function AddRecordScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.question}>What would you like to record?</Text>
-        <Text style={styles.questionHint}>
-          Select all that apply — they're saved together.
-        </Text>
+        <Text style={styles.question}>{t("add.question")}</Text>
+        <Text style={styles.questionHint}>{t("add.questionHint")}</Text>
         <View style={styles.typeGrid}>
           {ACTIVITIES.map((type) => {
             const on = selected.includes(type);
@@ -210,7 +202,7 @@ export default function AddRecordScreen() {
               <Pressable
                 key={type}
                 accessibilityRole="button"
-                accessibilityLabel={style.label}
+                accessibilityLabel={t(style.label)}
                 accessibilityState={{ selected: on }}
                 onPress={() =>
                   setSelected((list) => toggleActivity(list, type))
@@ -226,7 +218,7 @@ export default function AddRecordScreen() {
                   <RecordIcon type={type} color={style.ink} size={22} />
                 </View>
                 <Text style={[styles.typeLabel, on && styles.typeLabelOn]}>
-                  {style.label}
+                  {t(style.label)}
                 </Text>
                 {on ? (
                   <View style={styles.typeCheck}>
@@ -250,7 +242,7 @@ export default function AddRecordScreen() {
           {hasDiaper || hasBath ? (
             <>
               <Text style={styles.fieldLabel}>
-                {milkSelected ? "Also in this record" : "In this record"}
+                {milkSelected ? t("add.alsoInRecord") : t("add.inRecord")}
               </Text>
               {selected.includes("pee") ? (
                 <LevelPanel
@@ -270,13 +262,13 @@ export default function AddRecordScreen() {
                   }
                 />
               ) : null}
-              {hasBath ? <BathRow /> : null}
+              {hasBath ? <BathRow name={babyName} /> : null}
             </>
           ) : null}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.fieldLabel}>Date & Time</Text>
+          <Text style={styles.fieldLabel}>{t("add.dateTime")}</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Change date and time"
@@ -288,7 +280,7 @@ export default function AddRecordScreen() {
               <FontAwesome6 name="clock" size={14} color={COLORS.blue700} />
             </View>
             <Text style={styles.timeValue}>
-              {`${dayLabel(recordedAt, now)}, ${clockLabel(recordedAt)}`}
+              {`${dayLabel(recordedAt, now, t, lang)}, ${clockLabel(recordedAt, lang)}`}
             </Text>
           </Pressable>
 
@@ -330,9 +322,7 @@ export default function AddRecordScreen() {
                 size={12}
                 color={COLORS.blue600}
               />
-              <Text style={styles.timeHintText}>
-                Records can't be in the future, so we set it to now.
-              </Text>
+              <Text style={styles.timeHintText}>{t("add.noFuture")}</Text>
             </View>
           ) : null}
         </View>
@@ -352,7 +342,7 @@ export default function AddRecordScreen() {
             onPress={handleUndo}
             style={styles.undoButton}
           >
-            <Text style={styles.undoText}>Undo</Text>
+            <Text style={styles.undoText}>{t("add.undo")}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -375,10 +365,10 @@ export default function AddRecordScreen() {
           )}
           <Text style={styles.saveText}>
             {status === "saved"
-              ? "Saved"
+              ? t("add.saved")
               : status === "saving"
-                ? "Saving…"
-                : "Save Record"}
+                ? t("add.saving")
+                : t("add.saveRecord")}
           </Text>
         </Pressable>
       </View>
@@ -397,21 +387,22 @@ function MilkPanel({
   onChangeText: (text: string) => void;
   onStep: (delta: number) => void;
 }) {
+  const { t } = useI18n();
   const valid = amount !== null && amount >= MIN_ML && amount <= MAX_ML;
   const hint =
     amount === null
-      ? "Enter the amount your baby drank."
+      ? t("add.amountEmpty")
       : !valid
-        ? `Enter an amount between ${MIN_ML} and ${MAX_ML} ml.`
-        : `Last recorded: ${LAST_MILK_ML} ml · Formula`;
+        ? t("add.amountRange", { min: MIN_ML, max: MAX_ML })
+        : t("add.lastRecorded", { ml: LAST_MILK_ML });
   const atMin = amount !== null && amount <= MIN_ML;
   const atMax = amount !== null && amount >= MAX_ML;
 
   return (
     <View>
       <View style={styles.rowBetween}>
-        <Text style={styles.fieldLabel}>Amount Consumed</Text>
-        <Text style={styles.fieldHint}>What your baby drank</Text>
+        <Text style={styles.fieldLabel}>{t("add.amountTitle")}</Text>
+        <Text style={styles.fieldHint}>{t("add.amountSubtitle")}</Text>
       </View>
       <View style={styles.amountCard}>
         <View style={styles.amountRow}>
@@ -496,6 +487,7 @@ function LevelPanel({
   value: number;
   onChange: (value: number) => void;
 }) {
+  const { t } = useI18n();
   const style = TYPE_STYLE[type];
   const activeStyle =
     type === "pee" ? styles.levelButtonOnPee : styles.levelButtonOnPoop;
@@ -507,8 +499,10 @@ function LevelPanel({
           <RecordIcon type={type} color={style.ink} size={20} />
         </View>
         <View style={styles.rowText}>
-          <Text style={styles.rowTitle}>{style.label} level</Text>
-          <Text style={styles.rowSubtitle}>How much was in the diaper?</Text>
+          <Text style={styles.rowTitle}>
+            {t("add.levelTitle", { type: t(style.label) })}
+          </Text>
+          <Text style={styles.rowSubtitle}>{t("add.levelQuestion")}</Text>
         </View>
         <Text
           style={[
@@ -516,7 +510,7 @@ function LevelPanel({
             { color: type === "pee" ? COLORS.skyInk : COLORS.sandInk },
           ]}
         >
-          {`${value} · ${LEVEL_LABELS[value]}`}
+          {`${value} · ${levelText(value, t)}`}
         </Text>
       </View>
 
@@ -527,7 +521,7 @@ function LevelPanel({
             <Pressable
               key={`${type}-${n}`}
               accessibilityRole="radio"
-              accessibilityLabel={`Level ${n}, ${LEVEL_LABELS[n]}`}
+              accessibilityLabel={`Level ${n}`}
               accessibilityState={{ checked: on }}
               onPress={() => onChange(n)}
               style={({ pressed }) => [
@@ -547,31 +541,33 @@ function LevelPanel({
       </View>
 
       <View style={styles.levelScale}>
-        <Text style={styles.levelScaleText}>A little</Text>
-        <Text style={styles.levelScaleText}>A lot</Text>
+        <Text style={styles.levelScaleText}>{t("level.1")}</Text>
+        <Text style={styles.levelScaleText}>{t("level.5")}</Text>
       </View>
     </View>
   );
 }
-function BathRow() {
+function BathRow({ name }: { name: string | null }) {
+  const { t } = useI18n();
   return (
     <ActivityRow
       tint={COLORS.lilacSoft}
       icon={<RecordIcon type="bath" color={COLORS.lilacInk} size={25} />}
-      title="Bath"
-      subtitle="Updates Emma's Last Bath on Home"
+      title={t("common.bath")}
+      subtitle={t("add.bathSubtitle", { name: name ?? t("join.thisBaby") })}
     />
   );
 }
 
 function EmptyPanel() {
+  const { t } = useI18n();
   return (
     <View style={styles.emptyPanel}>
       <View style={styles.emptyIcon}>
         <FontAwesome6 name="hand-pointer" size={16} color={COLORS.blue700} />
       </View>
-      <Text style={styles.emptyTitle}>Choose what happened</Text>
-      <Text style={styles.emptyText}>Tap one or more activities above.</Text>
+      <Text style={styles.emptyTitle}>{t("add.chooseTitle")}</Text>
+      <Text style={styles.emptyText}>{t("add.chooseText")}</Text>
     </View>
   );
 }

@@ -19,6 +19,8 @@ import { COLORS, FONTS } from "../constants/theme";
 import { RemoteBaby, saveJoinedBaby } from "../db/babies";
 import { getOrCreateLocalUser } from "../db/users";
 import { supabase } from "../lib/supabase";
+import { useI18n } from "../i18n/i18n";
+import { type MessageKey } from "../i18n/messages";
 
 const CODE_LENGTH = 6;
 const MAX_FAILURES = 5;
@@ -30,12 +32,7 @@ const WARM = "#A0603F";
 type InvitedBaby = Pick<RemoteBaby, "id" | "name">;
 type VerifyResult =
   | { ok: true; baby: InvitedBaby }
-  | { ok: false; error: string };
-
-const INVALID_MESSAGE =
-  "That code doesn't look right. Please check and try again.";
-const NETWORK_MESSAGE =
-  "Could not reach the server. Check your connection and try again.";
+  | { ok: false; error: MessageKey };
 
 // Invite codes are the first 6 characters of the baby id.
 const verifyCode = async (code: string): Promise<VerifyResult> => {
@@ -47,18 +44,19 @@ const verifyCode = async (code: string): Promise<VerifyResult> => {
     .limit(1)
     .maybeSingle();
 
-  if (error) return { ok: false, error: NETWORK_MESSAGE };
-  if (!data) return { ok: false, error: INVALID_MESSAGE };
+  if (error) return { ok: false, error: "join.network" };
+  if (!data) return { ok: false, error: "join.invalid" };
   return { ok: true, baby: data };
 };
 
 export default function JoinBabyProfileScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
+  const { t } = useI18n();
   const inputRef = useRef<TextInput>(null);
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<MessageKey | "">("");
   const [failures, setFailures] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(0);
   const [invitedBaby, setInvitedBaby] = useState<InvitedBaby | null>(null);
@@ -104,7 +102,7 @@ export default function JoinBabyProfileScreen() {
       setFailures(0);
       setLockedUntil(Date.now() + LOCK_MS);
       setNow(Date.now());
-      setError("Too many attempts. Please wait a minute and try again.");
+      setError("join.tooMany");
       return;
     }
     setFailures(nextFailures);
@@ -125,8 +123,8 @@ export default function JoinBabyProfileScreen() {
       setConfirmOpen(false);
       setError(
         joinError?.message.includes("invalid_code")
-          ? INVALID_MESSAGE
-          : "Could not join this profile. Please try again.",
+          ? "join.invalid"
+          : "join.failed",
       );
       return;
     }
@@ -152,7 +150,7 @@ export default function JoinBabyProfileScreen() {
         >
           <FontAwesome6 name="arrow-left" size={15} color={COLORS.ink} />
         </Pressable>
-        <Text style={styles.title}>Join Baby Profile</Text>
+        <Text style={styles.title}>{t("join.title")}</Text>
         <View style={styles.iconButtonSpacer} />
       </View>
 
@@ -170,13 +168,11 @@ export default function JoinBabyProfileScreen() {
               accessibilityLabel="Two caregivers smiling together while holding a baby"
             />
           </View>
-          <Text style={styles.heroTitle}>Caring is better together</Text>
-          <Text style={styles.heroBody}>
-            Enter the invitation code shared with you to help care for a baby.
-          </Text>
+          <Text style={styles.heroTitle}>{t("join.heroTitle")}</Text>
+          <Text style={styles.heroBody}>{t("join.heroBody")}</Text>
         </View>
 
-        <Text style={styles.label}>Invitation Code</Text>
+        <Text style={styles.label}>{t("join.codeLabel")}</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Enter invitation code"
@@ -219,7 +215,12 @@ export default function JoinBabyProfileScreen() {
           <View style={styles.errorRow}>
             <FontAwesome6 name="circle-info" size={12} color={WARM} />
             <Text style={styles.errorText}>
-              {locked ? `${error} (${remainingSeconds}s)` : error}
+              {locked
+                ? t("join.lockedRemaining", {
+                    error: t(error),
+                    seconds: remainingSeconds,
+                  })
+                : t(error)}
             </Text>
           </View>
         ) : (
@@ -229,9 +230,7 @@ export default function JoinBabyProfileScreen() {
               size={12}
               color={COLORS.blue700}
             />
-            <Text style={styles.helpText}>
-              Ask the profile owner for their 6-character invitation code.
-            </Text>
+            <Text style={styles.helpText}>{t("join.help")}</Text>
           </View>
         )}
       </ScrollView>
@@ -247,7 +246,7 @@ export default function JoinBabyProfileScreen() {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Text style={styles.joinText}>Join Profile</Text>
+              <Text style={styles.joinText}>{t("join.joinProfile")}</Text>
               <FontAwesome6 name="arrow-right" size={15} color="#FFFFFF" />
             </>
           )}
@@ -257,9 +256,7 @@ export default function JoinBabyProfileScreen() {
           onPress={() => router.replace("/baby-setup")}
           style={styles.createLink}
         >
-          <Text style={styles.createLinkText}>
-            Create a new baby profile instead
-          </Text>
+          <Text style={styles.createLinkText}>{t("join.createInstead")}</Text>
         </Pressable>
       </View>
 
@@ -276,7 +273,9 @@ export default function JoinBabyProfileScreen() {
         <View style={[styles.sheet, styles.sheetCenter]}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>
-            Join {invitedBaby?.name ?? "this baby"}'s Profile?
+            {t("join.confirmTitle", {
+              name: invitedBaby?.name ?? t("join.thisBaby"),
+            })}
           </Text>
           <View style={styles.babyAvatar}>
             <Text style={styles.babyAvatarText}>
@@ -285,14 +284,13 @@ export default function JoinBabyProfileScreen() {
           </View>
           <Text style={styles.babyName}>{invitedBaby?.name ?? ""}</Text>
           <Text style={styles.sheetBody}>
-            You'll be able to view {invitedBaby?.name ?? "this baby"}'s feeding
-            and activity records and help keep them updated.
+            {t("join.confirmBody", {
+              name: invitedBaby?.name ?? t("join.thisBaby"),
+            })}
           </Text>
           <View style={styles.sharedChip}>
             <FontAwesome6 name="user-group" size={10} color={COLORS.blue800} />
-            <Text style={styles.sharedChipText}>
-              You'll join as a caregiver
-            </Text>
+            <Text style={styles.sharedChipText}>{t("join.caregiver")}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
@@ -304,7 +302,7 @@ export default function JoinBabyProfileScreen() {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
-                <Text style={styles.joinText}>Join Profile</Text>
+                <Text style={styles.joinText}>{t("join.joinProfile")}</Text>
                 <FontAwesome6 name="arrow-right" size={15} color="#FFFFFF" />
               </>
             )}
@@ -314,7 +312,7 @@ export default function JoinBabyProfileScreen() {
             onPress={() => setConfirmOpen(false)}
             style={styles.cancelButton}
           >
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>{t("common.cancel")}</Text>
           </Pressable>
         </View>
       </Modal>

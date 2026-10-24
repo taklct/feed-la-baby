@@ -1,25 +1,13 @@
 import { useEffect, useRef } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { COLORS } from "../constants/theme";
+import { formatMonthDay } from "../i18n/format";
+import { useI18n, type TranslateFn } from "../i18n/i18n";
 
 const ITEM_H = 40;
 const VISIBLE = 5;
 const DAYS_BACK = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
 
 type Props = {
   value: Date;
@@ -32,11 +20,11 @@ const startOfDay = (date: Date) =>
 
 const clamp = (n: number, max: number) => Math.min(max, Math.max(0, n));
 
-const dayLabel = (date: Date, today: Date) => {
+const dayLabel = (date: Date, today: Date, t: TranslateFn, lang: Lang) => {
   const days = Math.round((startOfDay(today) - startOfDay(date)) / DAY_MS);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
-  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+  if (days === 0) return t("common.today");
+  if (days === 1) return t("common.yesterday");
+  return formatMonthDay(date, lang);
 };
 
 const hourLabel = (hour: number) => String(hour).padStart(2, "0");
@@ -44,6 +32,7 @@ const hourLabel = (hour: number) => String(hour).padStart(2, "0");
 const minuteLabel = (minute: number) => String(minute).padStart(2, "0");
 
 export function DateTimeWheel({ value, maximum, onChange }: Props) {
+  const { t, lang } = useI18n();
   const days = Array.from({ length: DAYS_BACK + 1 }, (_, i) => {
     const offset = DAYS_BACK - i;
     return new Date(
@@ -91,7 +80,7 @@ export function DateTimeWheel({ value, maximum, onChange }: Props) {
   return (
     <View style={styles.wheels}>
       <Column
-        labels={days.map((d) => dayLabel(d, maximum))}
+        labels={days.map((d) => dayLabel(d, maximum, t, lang))}
         index={dayIndex}
         onSelect={(i) => withDay(days[i])}
       />

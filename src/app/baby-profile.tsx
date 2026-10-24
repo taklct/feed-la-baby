@@ -21,7 +21,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS } from "../constants/theme";
 import {
-  type Answer,
   type BabyDetails,
   type BabyProfile,
   deleteBabyData,
@@ -30,16 +29,15 @@ import {
   publishBaby,
   updateBaby,
 } from "../db/babies";
+import { formatDate } from "../i18n/format";
+import { useI18n } from "../i18n/i18n";
+import { LANGUAGES, type Lang } from "../i18n/messages";
+import { ageLabel, parseDate, toDateString } from "../utils/dates";
 
 type IconName = ComponentProps<typeof FontAwesome6>["name"];
 
 const DANGER = "#B3261E";
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const OPTIONS: { value: Answer; label: string }[] = [
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
-  { value: "unsure", label: "Not sure" },
-];
 const EMPTY_DRAFT: BabyDetails = {
   name: "",
   dateOfBirth: "",
@@ -47,36 +45,8 @@ const EMPTY_DRAFT: BabyDetails = {
   clinicianFeedingPlan: null,
 };
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const pad = (value: number) => String(value).padStart(2, "0");
-
-const toDateString = (date: Date) =>
-  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
-const parseDate = (value: string) => {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
-
 const isValidDate = (value: string) =>
   DATE_PATTERN.test(value) && toDateString(parseDate(value)) === value;
-
-const answerLabel = (answer: Answer | null) =>
-  OPTIONS.find((option) => option.value === answer)?.label ?? "Not set";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -87,57 +57,9 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function ChoiceGroup({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: Answer | null;
-  onChange: (value: Answer) => void;
-}) {
-  return (
-    <Field label={label}>
-      <View style={styles.segGroup}>
-        {OPTIONS.map((option) => {
-          const selected = value === option.value;
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
-              onPress={() => onChange(option.value)}
-              style={[styles.seg, selected && styles.segSelected]}
-            >
-              <Text
-                style={[styles.segText, selected && styles.segTextSelected]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </Field>
-  );
-}
+const dateLabel = (date: Date, lang: Lang) => formatDate(date, lang, true);
 
-const dateLabel = (date: Date) =>
-  `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
-
-const shortDateLabel = (date: Date) =>
-  `${date.getDate()} ${MONTHS[date.getMonth()].slice(0, 3)} ${date.getFullYear()}`;
-
-const ageLabel = (dob: Date, now: Date) => {
-  const days = Math.floor((now.getTime() - dob.getTime()) / 86400000);
-  if (days < 14) return `${days} ${days === 1 ? "day" : "days"}`;
-  let months =
-    (now.getFullYear() - dob.getFullYear()) * 12 +
-    (now.getMonth() - dob.getMonth());
-  if (now.getDate() < dob.getDate()) months -= 1;
-  if (months < 1) return `${Math.floor(days / 7)} weeks`;
-  return `${months} ${months === 1 ? "month" : "months"}`;
-};
+const shortDateLabel = (date: Date, lang: Lang) => formatDate(date, lang);
 
 function NavTab({
   icon,
@@ -194,6 +116,7 @@ function DetailRow({
 export default function BabyProfileScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
+  const { t, lang, setLang } = useI18n();
   const [profile, setProfile] = useState<BabyProfile | null | undefined>(
     undefined,
   );
@@ -226,6 +149,7 @@ export default function BabyProfileScreen() {
     kg: w.kg,
   }));
   const latest = weights[0];
+  const ageText = ageLabel(dob, now, t);
   const initial = profile.name.charAt(0).toUpperCase();
   const draftValid =
     draft.name.trim().length > 0 &&
@@ -258,7 +182,7 @@ export default function BabyProfileScreen() {
       setEditOpen(false);
       reload();
     } catch {
-      Alert.alert("Could not save", "Please try again.");
+      Alert.alert(t("common.couldNotSave"), t("common.tryAgain"));
     } finally {
       setSaving(false);
     }
@@ -270,7 +194,7 @@ export default function BabyProfileScreen() {
       setConfirmOpen(false);
       reload();
     } catch {
-      Alert.alert("Could not delete", "Please try again.");
+      Alert.alert(t("common.couldNotDelete"), t("common.tryAgain"));
     }
   };
 
@@ -281,8 +205,8 @@ export default function BabyProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Baby Profile</Text>
-          <Text style={styles.subtitle}>Everything about your little one</Text>
+          <Text style={styles.title}>{t("baby.title")}</Text>
+          <Text style={styles.subtitle}>{t("baby.subtitle")}</Text>
         </View>
 
         <View style={styles.profileCard}>
@@ -293,8 +217,12 @@ export default function BabyProfileScreen() {
             <Text style={styles.profileName} numberOfLines={1}>
               {profile.name}
             </Text>
-            <Text style={styles.profileAge}>{ageLabel(dob, now)} old</Text>
-            <Text style={styles.profileBorn}>Born {dateLabel(dob)}</Text>
+            <Text style={styles.profileAge}>
+              {t("age.old", { age: ageText })}
+            </Text>
+            <Text style={styles.profileBorn}>
+              {t("baby.born", { date: dateLabel(dob, lang) })}
+            </Text>
           </View>
           <Pressable
             accessibilityRole="button"
@@ -305,53 +233,47 @@ export default function BabyProfileScreen() {
             ]}
           >
             <FontAwesome6 name="pen" size={11} color={COLORS.blue700} />
-            <Text style={styles.editButtonText}>Edit</Text>
+            <Text style={styles.editButtonText}>{t("baby.edit")}</Text>
           </Pressable>
         </View>
 
-        <Text style={styles.sectionTitle}>Baby Details</Text>
+        <Text style={styles.sectionTitle}>{t("baby.details")}</Text>
         <View style={styles.card}>
-          <DetailRow icon="face-smile" label="Name" value={profile.name} />
+          <DetailRow
+            icon="face-smile"
+            label={t("baby.name")}
+            value={profile.name}
+          />
           <DetailRow
             icon="calendar"
-            label="Date of Birth"
-            value={shortDateLabel(dob)}
+            label={t("baby.dob")}
+            value={shortDateLabel(dob, lang)}
           />
           <DetailRow
             icon="cake-candles"
-            label="Age"
-            value={ageLabel(dob, now)}
-          />
-          <DetailRow
-            icon="baby"
-            label="Born prematurely"
-            value={answerLabel(profile.premature)}
-          />
-          <DetailRow
-            icon="file-medical"
-            label="Doctor's feeding plan"
-            value={answerLabel(profile.clinicianFeedingPlan)}
+            label={t("baby.age")}
+            value={ageText}
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Weight</Text>
+        <Text style={styles.sectionTitle}>{t("baby.weight")}</Text>
         <View style={styles.weightCard}>
           {latest ? (
             <>
-              <Text style={styles.cardKicker}>Current Weight</Text>
+              <Text style={styles.cardKicker}>{t("baby.currentWeight")}</Text>
               <View style={styles.weightRow}>
                 <Text style={styles.weightValue}>{latest.kg.toFixed(1)}</Text>
                 <Text style={styles.weightUnit}>kg</Text>
               </View>
               <Text style={styles.weightUpdated}>
-                Last updated: {dateLabel(latest.date)}
+                {t("baby.lastUpdated", { date: dateLabel(latest.date, lang) })}
               </Text>
             </>
           ) : (
             <>
-              <Text style={styles.emptyTitle}>No weight added yet</Text>
+              <Text style={styles.emptyTitle}>{t("baby.noWeight")}</Text>
               <Text style={styles.emptyText}>
-                Add {profile.name}&apos;s first weight to start tracking.
+                {t("baby.addFirstWeight", { name: profile.name })}
               </Text>
             </>
           )}
@@ -361,13 +283,15 @@ export default function BabyProfileScreen() {
             style={styles.updateWeightButton}
           >
             <FontAwesome6 name="plus" size={13} color={COLORS.blue700} />
-            <Text style={styles.updateWeightText}>Update Weight</Text>
+            <Text style={styles.updateWeightText}>
+              {t("baby.updateWeight")}
+            </Text>
           </Pressable>
         </View>
 
         {weights.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Weight History</Text>
+            <Text style={styles.sectionTitle}>{t("baby.weightHistory")}</Text>
             <View style={styles.card}>
               {weights.map((w, index) => {
                 const isLatest = index === 0;
@@ -386,7 +310,7 @@ export default function BabyProfileScreen() {
                           isLatest && styles.weightDateActive,
                         ]}
                       >
-                        {shortDateLabel(w.date)}
+                        {shortDateLabel(w.date, lang)}
                       </Text>
                     </View>
                     <Text
@@ -404,7 +328,7 @@ export default function BabyProfileScreen() {
           </>
         ) : null}
 
-        <Text style={styles.sectionTitle}>Sharing</Text>
+        <Text style={styles.sectionTitle}>{t("baby.sharing")}</Text>
         <Pressable
           accessibilityRole="button"
           onPress={() => router.push("/join-baby-profile")}
@@ -414,24 +338,59 @@ export default function BabyProfileScreen() {
           ]}
         >
           <FontAwesome6 name="user-plus" size={13} color={COLORS.blue700} />
-          <Text style={styles.shareText}>Share Baby Profile</Text>
+          <Text style={styles.shareText}>{t("baby.shareProfile")}</Text>
         </Pressable>
 
         <View style={styles.inviteCard}>
-          <Text style={styles.inviteLabel}>Invitation code</Text>
+          <Text style={styles.inviteLabel}>{t("baby.inviteCode")}</Text>
           <Text style={styles.inviteCode}>{inviteCodeFor(profile.id)}</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Settings</Text>
+        <Text style={styles.sectionTitle}>{t("baby.settings")}</Text>
+        <View style={styles.card}>
+          <View style={styles.langHeader}>
+            <Text style={styles.detailLabel}>{t("baby.language")}</Text>
+          </View>
+          {LANGUAGES.map((option) => {
+            const selected = lang === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected }}
+                onPress={() => setLang(option.value)}
+                style={({ pressed }) => [
+                  styles.radioRow,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View
+                  style={[styles.radioOuter, selected && styles.radioOuterOn]}
+                >
+                  {selected ? <View style={styles.radioInner} /> : null}
+                </View>
+                <Text
+                  style={[styles.radioLabel, selected && styles.radioLabelOn]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
         <Pressable
           accessibilityRole="button"
           onPress={() => setConfirmOpen(true)}
-          style={({ pressed }) => [styles.dangerRow, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.dangerRow,
+            styles.dangerRowSpaced,
+            pressed && styles.pressed,
+          ]}
         >
           <View style={styles.dangerIcon}>
             <FontAwesome6 name="trash-can" size={14} color={DANGER} />
           </View>
-          <Text style={styles.dangerText}>Delete Baby Data</Text>
+          <Text style={styles.dangerText}>{t("baby.deleteData")}</Text>
           <FontAwesome6 name="chevron-right" size={11} color="#D9B3A9" />
         </Pressable>
       </ScrollView>
@@ -439,15 +398,15 @@ export default function BabyProfileScreen() {
       <View style={styles.nav}>
         <NavTab
           icon="house"
-          label="Home"
+          label={t("nav.home")}
           onPress={() => router.navigate("/home")}
         />
         <NavTab
           icon="clock-rotate-left"
-          label="History"
+          label={t("nav.history")}
           onPress={() => router.navigate("/history")}
         />
-        <NavTab icon="baby" label="Baby" active />
+        <NavTab icon="baby" label={t("nav.baby")} active />
       </View>
 
       <StatusBar style="dark" />
@@ -466,7 +425,7 @@ export default function BabyProfileScreen() {
           <View style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Edit Baby Profile</Text>
+              <Text style={styles.sheetTitle}>{t("baby.editTitle")}</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Close"
@@ -477,16 +436,16 @@ export default function BabyProfileScreen() {
               </Pressable>
             </View>
             <View style={styles.sheetBody}>
-              <Field label="Name">
+              <Field label={t("baby.name")}>
                 <TextInput
                   value={draft.name}
                   onChangeText={(name) => updateDraft({ name })}
-                  placeholder="Baby's name"
+                  placeholder={t("baby.namePlaceholder")}
                   placeholderTextColor={COLORS.placeholder}
                   style={styles.input}
                 />
               </Field>
-              <Field label="Date of Birth">
+              <Field label={t("baby.dob")}>
                 <TextInput
                   value={draft.dateOfBirth}
                   onChangeText={handleDobChange}
@@ -497,18 +456,6 @@ export default function BabyProfileScreen() {
                   style={styles.input}
                 />
               </Field>
-              <ChoiceGroup
-                label="Born prematurely?"
-                value={draft.premature}
-                onChange={(premature) => updateDraft({ premature })}
-              />
-              <ChoiceGroup
-                label="Doctor gave a feeding plan?"
-                value={draft.clinicianFeedingPlan}
-                onChange={(clinicianFeedingPlan) =>
-                  updateDraft({ clinicianFeedingPlan })
-                }
-              />
               <Pressable
                 accessibilityRole="button"
                 disabled={!draftValid || saving}
@@ -519,7 +466,7 @@ export default function BabyProfileScreen() {
                   pressed && styles.pressed,
                 ]}
               >
-                <Text style={styles.saveText}>Save Changes</Text>
+                <Text style={styles.saveText}>{t("common.saveChanges")}</Text>
               </Pressable>
             </View>
           </View>
@@ -541,25 +488,26 @@ export default function BabyProfileScreen() {
             <View style={styles.dialogIcon}>
               <FontAwesome6 name="trash-can" size={20} color={DANGER} />
             </View>
-            <Text style={styles.dialogTitle}>Delete baby data?</Text>
-            <Text style={styles.dialogText}>
-              This removes the baby profile, weights and activity records from
-              this device. This cannot be undone.
-            </Text>
+            <Text style={styles.dialogTitle}>{t("baby.deleteTitle")}</Text>
+            <Text style={styles.dialogText}>{t("baby.deleteBody")}</Text>
             <View style={styles.dialogRow}>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => setConfirmOpen(false)}
                 style={[styles.dialogButton, styles.dialogCancel]}
               >
-                <Text style={styles.dialogCancelText}>Cancel</Text>
+                <Text style={styles.dialogCancelText}>
+                  {t("common.cancel")}
+                </Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
                 onPress={deleteData}
                 style={[styles.dialogButton, styles.dialogDelete]}
               >
-                <Text style={styles.dialogDeleteText}>Delete</Text>
+                <Text style={styles.dialogDeleteText}>
+                  {t("common.delete")}
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -819,6 +767,55 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 15,
     color: DANGER,
+  },
+  dangerRowSpaced: {
+    marginTop: 12,
+  },
+  langHeader: {
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.line,
+  },
+  radioRow: {
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.line,
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: COLORS.line,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioOuterOn: {
+    borderColor: COLORS.blue700,
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.blue700,
+  },
+  radioLabel: {
+    flex: 1,
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.ink,
+  },
+  radioLabelOn: {
+    fontFamily: FONTS.bodySemiBold,
+    color: COLORS.blue700,
   },
   modalRoot: {
     flex: 1,
