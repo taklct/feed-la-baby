@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-        window.FontAwesomeConfig = {
-          autoReplaceSvg: 'nest'
-        };
-      </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Baby Setup</title>
@@ -20,7 +14,7 @@
       theme: {
         extend: {
           colors: {
-            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
+            sage: { 50: '#F0F6FC', 100: '#E1EEF9', 200: '#C6DDF1', 300: '#A7C7E7', 500: '#7BA7D1', 600: '#5B8DBE', 700: '#3A6A99', 800: '#2C537A' },
             cream: '#FAF9F6',
             line: '#E7E5E0',
             ink: '#2F3A35',
@@ -125,7 +119,7 @@
     <!-- 4. Primary action (fixed) -->
     <footer id="footer" class="relative z-20 border-t border-line/70 bg-cream/95 px-6 pb-8 pt-3 shadow-[0_-12px_24px_-16px_rgba(47,58,53,0.18)] backdrop-blur">
       <button id="create-profile-btn" type="submit" form="baby-form" data-navigate="S03-home-dashboard"
-        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BFCFC7] disabled:shadow-none disabled:active:scale-100">
+        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(58,106,153,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BCD0E4] disabled:shadow-none disabled:active:scale-100">
         <span id="btn-label">Create Baby Profile</span>
         <i id="btn-icon" class="fa-solid fa-arrow-right text-[15px]"></i>
       </button>
@@ -215,7 +209,7 @@
         $('btn-label').textContent = 'Creating profile…';
         $('btn-icon').className = 'fa-solid fa-circle-notch fa-spin text-[15px]';
         setTimeout(() => {
-          btn.classList.remove('disabled:bg-[#BFCFC7]');
+          btn.classList.remove('disabled:bg-[#BCD0E4]');
           $('btn-label').textContent = 'Profile created';
           $('btn-icon').className = 'fa-solid fa-check text-[15px]';
         }, 900);

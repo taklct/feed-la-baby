@@ -2,6 +2,7 @@
   "expo": {
     "name": "feed-la-baby-tmp",
     "slug": "feed-la-baby-tmp",
+    "scheme": "feedlababy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,7 +20,25 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image",
+      "expo-font",
+      "@react-native-community/datetimepicker",
+      "expo-sqlite"
+    ],
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "a7dede98-ade9-4757-954e-bf5ae32e30de"
+      }
     }
   }
 }

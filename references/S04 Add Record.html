@@ -20,8 +20,8 @@
       theme: {
         extend: {
           colors: {
-            sage: { 50: '#F1F6F3', 100: '#E3EDE7', 200: '#C9DCD1', 300: '#A8C5B5', 500: '#7FA592', 600: '#668F7B', 700: '#3C6B59', 800: '#2F5747' },
-            sky: { soft: '#E6EFF4', ink: '#41708C' },
+            sage: { 50: '#F0F6FC', 100: '#E1EEF9', 200: '#C6DDF1', 300: '#A7C7E7', 500: '#7BA7D1', 600: '#5B8DBE', 700: '#3A6A99', 800: '#2C537A' },
+            sky: { soft: '#E0F2EF', ink: '#2E7D74' },
             sand: { soft: '#F4ECE2', ink: '#86654A' },
             lilac: { soft: '#ECEAF4', ink: '#5E5A86' },
             cream: '#FAF9F6',
@@ -60,19 +60,20 @@
       <span aria-hidden="true"></span>
     </header>
 
-    <form id="record-form" class="relative z-10 flex flex-1 flex-col px-5" novalidate>
+    <form id="record-form" class="relative z-10 flex-1 overflow-y-auto px-5 pb-6 [scrollbar-width:none]" novalidate>
 
-      <!-- 2. Activity type -->
-      <section id="activity-type" class="mt-7">
+      <!-- 2. Activity type (multi-select) -->
+      <section id="activity-type" class="mt-6">
         <h2 class="font-display text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink">What would you like to record?</h2>
-        <div id="type-grid" class="mt-4 grid grid-cols-4 gap-2" role="group" aria-label="Activity type"></div>
+        <p class="mt-1 text-[13px] text-muted">Select all that apply — they're saved together.</p>
+        <div id="type-grid" class="mt-4 grid grid-cols-4 gap-2" role="group" aria-label="Activity types"></div>
       </section>
 
-      <!-- 3. Dynamic input area -->
-      <section id="dynamic-area" class="mt-8"></section>
+      <!-- 3. Dynamic input area (one block per selected activity) -->
+      <section id="dynamic-area" class="mt-6 space-y-3"></section>
 
       <!-- Date & time (all activities) -->
-      <section id="record-time" class="mt-8">
+      <section id="record-time" class="mt-6">
         <label for="time-input" class="text-[14px] font-semibold text-ink">Date &amp; Time</label>
         <div class="relative mt-3">
           <div class="flex h-14 items-center gap-3 rounded-2xl border border-line bg-white px-4">
@@ -96,7 +97,7 @@
     <!-- 4. Primary action -->
     <footer id="footer" class="relative z-20 px-5 pb-9 pt-3">
       <button id="save-btn" type="submit" form="record-form" data-navigate="S03-home"
-        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(60,107,89,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BFCFC7] disabled:shadow-none disabled:active:scale-100">
+        class="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-sage-700 text-[17px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(58,106,153,0.7)] transition duration-200 hover:bg-sage-800 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-300/70 disabled:cursor-not-allowed disabled:bg-[#BCD0E4] disabled:shadow-none disabled:active:scale-100">
         <i id="save-icon" class="fa-solid fa-check text-[15px]"></i>
         <span id="save-label">Save Record</span>
       </button>
@@ -119,18 +120,17 @@
         bath: { label: 'Bath', tint: 'bg-lilac-soft text-lilac-ink', icon: () => '<i class="fa-solid fa-bath text-[17px]"></i>' }
       };
 
-      // Selection: Milk or Bath alone; Pee and Poop may be combined into one diaper event
-      let sel = new Set(['milk']);
+      // Selection: any combination of Milk, Pee, Poop and Bath in one record
+      let sel = new Set(['milk', 'pee']);   // sample: a feed plus a wet diaper in one record
       let amount = lastMilkMl;
       let saving = false, saved = false;
-
-      const isDiaper = () => [...sel].every(t => t === 'pee' || t === 'poop');
+      const ORDER = ['milk', 'pee', 'poop', 'bath'];
 
       function renderTypes() {
         $('type-grid').innerHTML = Object.entries(TYPES).map(([k, t]) => {
           const on = sel.has(k);
           return `<button type="button" data-type="${k}" aria-pressed="${on}"
-            class="type-card relative flex h-[104px] flex-col items-center justify-center gap-2 rounded-2xl border transition active:scale-[0.97] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-100 ${on ? 'border-sage-500 bg-sage-50 shadow-[0_0_0_1px_#7FA592]' : 'border-line bg-white shadow-[0_6px_16px_-14px_rgba(47,58,53,0.4)]'}">
+            class="type-card relative flex h-[104px] flex-col items-center justify-center gap-2 rounded-2xl border transition active:scale-[0.97] focus:outline-none focus-visible:ring-4 focus-visible:ring-sage-100 ${on ? 'border-sage-500 bg-sage-50 shadow-[0_0_0_1px_#7BA7D1]' : 'border-line bg-white shadow-[0_6px_16px_-14px_rgba(47,58,53,0.4)]'}">
             <span class="flex h-11 w-11 items-center justify-center rounded-full ${on ? 'bg-white ' + t.tint.split(' ')[1] : t.tint}">${t.icon()}</span>
             <span class="text-[13px] font-semibold ${on ? 'text-sage-800' : 'text-ink'}">${t.label}</span>
             ${on ? '<span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-sage-700 text-white"><i class="fa-solid fa-check text-[8px]"></i></span>' : ''}
@@ -144,7 +144,7 @@
             <label for="amount-input" class="text-[14px] font-semibold text-ink">Amount Consumed</label>
             <span class="text-[12px] font-medium text-muted">What your baby drank</span>
           </div>
-          <div class="mt-3 rounded-2xl border border-line bg-white px-4 py-6 shadow-[0_10px_26px_-20px_rgba(47,58,53,0.4)]">
+          <div class="mt-2.5 rounded-2xl border border-line bg-white px-4 py-5 shadow-[0_10px_26px_-20px_rgba(47,58,53,0.4)]">
             <div class="flex items-center justify-between">
               <button id="minus-btn" type="button" aria-label="Decrease by 10 ml" class="flex h-14 w-14 items-center justify-center rounded-2xl bg-sage-50 text-sage-700 transition hover:bg-sage-100 active:scale-95 disabled:opacity-40"><i class="fa-solid fa-minus text-[18px]"></i></button>
               <label for="amount-input" id="amount-display" class="flex cursor-text items-baseline justify-center gap-1.5">
@@ -159,46 +159,68 @@
         </div>`;
       }
 
-      function diaperPanel() {
-        const pee = sel.has('pee'), poop = sel.has('poop');
-        const title = pee && poop ? 'Pee & Poop' : pee ? 'Pee' : 'Poop';
-        const chip = (k, on) => `<button type="button" data-toggle="${k}" aria-pressed="${on}" class="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-[14px] font-semibold transition active:scale-[0.98] ${on ? 'border-sage-500 bg-sage-50 text-sage-700' : 'border-line bg-white text-muted hover:text-ink'}">
-            <span class="flex h-5 w-5 items-center justify-center rounded-md ${on ? 'bg-sage-700 text-white' : 'border border-[#C9CCC8] bg-white'}">${on ? '<i class="fa-solid fa-check text-[9px]"></i>' : ''}</span>${TYPES[k].label}</button>`;
-        return `<div class="fade-in">
-          <p class="text-[14px] font-semibold text-ink">Diaper Change</p>
-          <div class="mt-3 rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-20px_rgba(47,58,53,0.4)]">
-            <div class="flex items-center gap-3">
-              <span class="relative flex h-12 w-12 items-center justify-center rounded-2xl ${poop ? 'bg-sand-soft text-sand-ink' : 'bg-sky-soft text-sky-ink'}">
-                ${poop ? DIAPER(24) : '<i class="fa-solid fa-droplet text-[19px]"></i>'}
-                ${pee && poop ? '<span class="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-sky-soft text-sky-ink ring-2 ring-white"><i class="fa-solid fa-droplet text-[10px]"></i></span>' : ''}
-              </span>
-              <div>
-                <p class="font-display text-[20px] font-semibold leading-tight text-ink">${title}</p>
-                <p class="text-[13px] text-muted">${pee && poop ? 'Adds +1 Pee and +1 Poop' : pee ? 'Adds +1 Pee to today' : 'Adds +1 Poop to today'}</p>
-              </div>
-            </div>
-            <div class="mt-4 flex gap-2.5">${chip('pee', pee)}${chip('poop', poop)}</div>
-            <p class="mt-3 text-[12px] text-muted">Tick both if it was a wet and dirty diaper.</p>
+      // Compact row for activities that need no input
+      const row = (tint, icon, title, sub) => `<div class="fade-in flex items-center gap-3.5 rounded-2xl border border-line bg-white px-4 py-3.5 shadow-[0_10px_26px_-22px_rgba(47,58,53,0.4)]">
+          <span class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tint}">${icon}</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[15px] font-semibold text-ink">${title}</p>
+            <p class="text-[12px] text-muted">${sub}</p>
           </div>
+          <i class="fa-solid fa-circle-check text-[16px] text-sage-500"></i>
+        </div>`;
+
+      // Pee & Poop levels (1 = a little … 5 = a lot)
+      const levels = { pee: 3, poop: 3 };
+      const LEVEL_NAMES = ['', 'A little', 'Light', 'Medium', 'Heavy', 'A lot'];
+      const LEVEL_STYLE = {
+        pee:  { on: 'border-sky-ink bg-sky-ink text-white shadow-[0_6px_14px_-8px_rgba(46,125,116,0.8)]', text: 'text-sky-ink' },
+        poop: { on: 'border-sand-ink bg-sand-ink text-white shadow-[0_6px_14px_-8px_rgba(134,101,74,0.8)]', text: 'text-sand-ink' }
+      };
+
+      function levelPanel(k, anim = true) {
+        const t = TYPES[k], v = levels[k], s = LEVEL_STYLE[k];
+        const icon = k === 'pee' ? '<i class="fa-solid fa-droplet text-[15px]"></i>' : DIAPER(19);
+        return `<div id="panel-${k}" class="${anim ? 'fade-in ' : ''}rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-22px_rgba(47,58,53,0.4)]">
+          <div class="flex items-center gap-3">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${t.tint}">${icon}</span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[15px] font-semibold text-ink">${t.label} level</p>
+              <p class="text-[12px] text-muted">How much was in the diaper?</p>
+            </div>
+            <span class="whitespace-nowrap text-[13px] font-semibold ${s.text}">${v} · ${LEVEL_NAMES[v]}</span>
+          </div>
+          <div class="mt-3.5 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="${t.label} level, 1 to 5">
+            ${[1, 2, 3, 4, 5].map(n => `<button type="button" role="radio" aria-checked="${n === v}" aria-label="Level ${n}, ${LEVEL_NAMES[n]}" data-level="${k}" data-val="${n}"
+              class="h-11 rounded-xl border text-[15px] font-bold transition active:scale-95 ${n === v ? s.on : 'border-line bg-cream text-muted hover:text-ink'}">${n}</button>`).join('')}
+          </div>
+          <div class="mt-1.5 flex justify-between px-1 text-[11px] font-medium text-muted"><span>A little</span><span>A lot</span></div>
         </div>`;
       }
 
       function bathPanel() {
-        return `<div class="fade-in">
-          <p class="text-[14px] font-semibold text-ink">Bath Time</p>
-          <div class="mt-3 flex items-center gap-3.5 rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-20px_rgba(47,58,53,0.4)]">
-            <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-lilac-soft text-lilac-ink"><i class="fa-solid fa-bath text-[19px]"></i></span>
-            <div>
-              <p class="font-display text-[20px] font-semibold leading-tight text-ink">Bath</p>
-              <p class="text-[13px] text-muted">Updates Emma's Last Bath on Home.</p>
-            </div>
-          </div>
+        return row('bg-lilac-soft text-lilac-ink', '<i class="fa-solid fa-bath text-[17px]"></i>', 'Bath', "Updates Emma's Last Bath on Home");
+      }
+
+      function emptyPanel() {
+        return `<div class="fade-in flex flex-col items-center rounded-2xl border border-dashed border-sage-200 bg-white/70 px-6 py-7 text-center">
+          <span class="flex h-11 w-11 items-center justify-center rounded-full bg-sage-50 text-sage-700"><i class="fa-regular fa-hand-pointer text-[16px]"></i></span>
+          <p class="mt-3 text-[15px] font-semibold text-ink">Choose what happened</p>
+          <p class="mt-1 text-[13px] text-muted">Tap one or more activities above.</p>
         </div>`;
       }
 
       function renderPanel() {
         const area = $('dynamic-area');
-        area.innerHTML = sel.has('milk') ? milkPanel() : sel.has('bath') ? bathPanel() : diaperPanel();
+        let html = '';
+        if (!sel.size) html = emptyPanel();
+        if (sel.has('milk')) html += milkPanel();
+        if (sel.has('pee') || sel.has('poop') || sel.has('bath')) {
+          html += `<p class="${sel.has('milk') ? 'pt-2 ' : ''}text-[14px] font-semibold text-ink">${sel.has('milk') ? 'Also in this record' : 'In this record'}</p>`;
+          if (sel.has('pee')) html += levelPanel('pee');
+          if (sel.has('poop')) html += levelPanel('poop');
+          if (sel.has('bath')) html += bathPanel();
+        }
+        area.innerHTML = html;
         if (sel.has('milk')) bindMilk();
         validate();
       }
@@ -239,18 +261,16 @@
       $('type-grid').addEventListener('click', e => {
         const c = e.target.closest('.type-card'); if (!c) return;
         const k = c.dataset.type;
-        if ((k === 'pee' || k === 'poop') && isDiaper() && sel.size) {
-          if (sel.has(k) && sel.size > 1) sel.delete(k); else sel.add(k);
-        } else {
-          sel = new Set([k]);
-        }
+        if (sel.has(k)) sel.delete(k); else sel.add(k);
+        sel = new Set(ORDER.filter(t => sel.has(t)));
         renderTypes(); renderPanel();
       });
+      // Level selection (updates only that panel)
       $('dynamic-area').addEventListener('click', e => {
-        const t = e.target.closest('[data-toggle]'); if (!t) return;
-        const k = t.dataset.toggle;
-        if (sel.has(k) && sel.size > 1) sel.delete(k); else sel.add(k);
-        renderTypes(); renderPanel();
+        const b = e.target.closest('[data-level]'); if (!b) return;
+        const k = b.dataset.level;
+        levels[k] = +b.dataset.val;
+        $('panel-' + k).outerHTML = levelPanel(k, false);
       });
 
       // Date & time: defaults to now, never in the future
@@ -281,7 +301,12 @@
         saving = true; validate();
         $('save-label').textContent = 'Saving…';
         $('save-icon').className = 'fa-solid fa-circle-notch fa-spin text-[15px]';
-        const msg = sel.has('milk') ? `Milk saved · ${amount} ml` : sel.has('bath') ? 'Bath saved' : sel.size === 2 ? 'Pee & Poop saved' : `${sel.has('pee') ? 'Pee' : 'Poop'} saved`;
+        const parts = [];
+        if (sel.has('milk')) parts.push(`Milk ${amount} ml`);
+        if (sel.has('pee')) parts.push(`Pee L${levels.pee}`);
+        if (sel.has('poop')) parts.push(`Poop L${levels.poop}`);
+        if (sel.has('bath')) parts.push('Bath');
+        const msg = `Saved · ${parts.join(' · ')}`;
         setTimeout(() => {
           saving = false; saved = true; validate();
           $('save-label').textContent = 'Saved';
