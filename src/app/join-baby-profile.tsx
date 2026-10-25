@@ -1,7 +1,6 @@
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -16,8 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS } from "../constants/theme";
-import { RemoteBaby, saveJoinedBaby } from "../db/babies";
-import { getOrCreateLocalUser } from "../db/users";
+import { joinBaby } from "../db/babies";
 import { supabase } from "../lib/supabase";
 import { useI18n } from "../i18n/i18n";
 import { type MessageKey } from "../i18n/messages";
@@ -29,7 +27,7 @@ const HERO_IMAGE_URI =
   "https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_bbbe0f6c05_17c722a7f1178c4b.png";
 const WARM = "#A0603F";
 
-type InvitedBaby = Pick<RemoteBaby, "id" | "name">;
+type InvitedBaby = { id: string; name: string };
 type VerifyResult =
   | { ok: true; baby: InvitedBaby }
   | { ok: false; error: MessageKey };
@@ -51,7 +49,6 @@ const verifyCode = async (code: string): Promise<VerifyResult> => {
 
 export default function JoinBabyProfileScreen() {
   const router = useRouter();
-  const db = useSQLiteContext();
   const { t } = useI18n();
   const inputRef = useRef<TextInput>(null);
   const [code, setCode] = useState("");
@@ -112,24 +109,18 @@ export default function JoinBabyProfileScreen() {
   const onConfirmJoin = async () => {
     if (!invitedBaby) return;
     setJoining(true);
-    const userId = await getOrCreateLocalUser(db);
-    const { data, error: joinError } = await supabase.rpc("join_baby_by_code", {
-      p_code: code,
-      p_user_id: userId,
-    });
-
-    if (joinError || !data) {
+    try {
+      await joinBaby(code);
+    } catch (e) {
       setJoining(false);
       setConfirmOpen(false);
+      const message = e instanceof Error ? e.message : "";
       setError(
-        joinError?.message.includes("invalid_code")
-          ? "join.invalid"
-          : "join.failed",
+        message.includes("invalid_code") ? "join.invalid" : "join.failed",
       );
       return;
     }
 
-    await saveJoinedBaby(db, data as RemoteBaby);
     setConfirmOpen(false);
     setJoining(false);
     router.replace("/home");

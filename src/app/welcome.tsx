@@ -2,7 +2,6 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,14 +14,13 @@ const HERO_IMAGE_URI =
   "https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_bbbe0f6c05_10c3972e39a62593.png";
 
 export default function WelcomeScreen() {
-  const db = useSQLiteContext();
   const { t } = useI18n();
 
   useEffect(() => {
-    loadBabyProfile(db).then((baby) => {
+    loadBabyProfile().then((baby) => {
       if (baby) router.replace("/home");
     });
-  }, [db]);
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>

@@ -1,4 +1,5 @@
-import type { SQLiteDatabase } from "expo-sqlite";
+import { supabase } from "../lib/supabase";
+import { findFirstBaby } from "./babies";
 
 export type HistoryRow = {
   id: string;
@@ -14,49 +15,33 @@ export type HistoryData = {
   rows: HistoryRow[];
 };
 
-type ActivityRow = {
-  id: string;
-  milk_ml: number | null;
-  pee_level: number | null;
-  poop_level: number | null;
-  bath: number;
-  occurred_at: number;
-};
-
-// Loads activities for the baby with occurred_at in [dayStart, dayEnd), newest first.
-export async function loadHistory(
-  db: SQLiteDatabase,
+// Activities for the first baby this device belongs to, between dayStart (inclusive) and dayEnd (exclusive), in ms.
+export const loadHistory = async (
   dayStart: number,
   dayEnd: number,
-): Promise<HistoryData> {
-  const baby = await db.getFirstAsync<{ id: string; name: string }>(
-    `SELECT id, name FROM babies
-      WHERE deleted_at IS NULL
-      ORDER BY created_at
-      LIMIT 1`,
-  );
+): Promise<HistoryData> => {
+  const baby = await findFirstBaby();
   if (!baby) return { babyName: null, rows: [] };
 
-  const activities = await db.getAllAsync<ActivityRow>(
-    `SELECT id, milk_ml, pee_level, poop_level, bath, occurred_at
-       FROM activities
-      WHERE baby_id = ?
-        AND deleted_at IS NULL
-        AND occurred_at >= ?
-        AND occurred_at < ?
-      ORDER BY occurred_at DESC`,
-    [baby.id, dayStart, dayEnd],
-  );
+  const { data, error } = await supabase
+    .from("activities")
+    .select("id, occurred_at, milk_ml, pee_level, poop_level, bath")
+    .eq("baby_id", baby.id)
+    .is("deleted_at", null)
+    .gte("occurred_at", dayStart)
+    .lt("occurred_at", dayEnd)
+    .order("occurred_at", { ascending: false });
+  if (error) throw error;
 
   return {
     babyName: baby.name,
-    rows: activities.map((activity) => ({
-      id: activity.id,
-      occurredAt: activity.occurred_at,
-      milk: activity.milk_ml,
-      pee: activity.pee_level,
-      poop: activity.poop_level,
-      bath: activity.bath === 1,
+    rows: (data ?? []).map((row) => ({
+      id: row.id,
+      occurredAt: row.occurred_at,
+      milk: row.milk_ml,
+      pee: row.pee_level,
+      poop: row.poop_level,
+      bath: row.bath === 1,
     })),
   };
-}
+};

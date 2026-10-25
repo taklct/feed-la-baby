@@ -3,7 +3,6 @@
 } from "@react-native-community/datetimepicker";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
@@ -63,7 +62,6 @@ const dayLabel = (date: Date, now: Date, t: TranslateFn, lang: Lang) => {
 
 export default function AddRecordScreen() {
   const router = useRouter();
-  const db = useSQLiteContext();
   const { t, lang } = useI18n();
   const [babyName, setBabyName] = useState<string | null>(null);
   const savedId = useRef<string | null>(null);
@@ -87,13 +85,13 @@ export default function AddRecordScreen() {
   );
 
   useEffect(() => {
-    loadBabyProfile(db).then((baby) => setBabyName(baby?.name ?? null));
-    loadLastMilkMl(db).then((ml) => {
+    loadBabyProfile().then((baby) => setBabyName(baby?.name ?? null));
+    loadLastMilkMl().then((ml) => {
       if (ml === null) return;
       setLastMilkMl(ml);
       setAmount(ml);
     });
-  }, [db]);
+  }, []);
 
   const milkSelected = selected.includes("milk");
   const hasDiaper = selected.includes("pee") || selected.includes("poop");
@@ -151,7 +149,7 @@ export default function AddRecordScreen() {
     setStatus("saving");
     timer.current = setTimeout(async () => {
       try {
-        savedId.current = await createActivity(db, {
+        savedId.current = await createActivity({
           milkMl: milkSelected ? amount : null,
           peeLevel: selected.includes("pee") ? levels.pee : null,
           poopLevel: selected.includes("poop") ? levels.poop : null,
@@ -171,7 +169,7 @@ export default function AddRecordScreen() {
   const handleUndo = async () => {
     if (timer.current) clearTimeout(timer.current);
     if (savedId.current) {
-      await deleteActivity(db, savedId.current);
+      await deleteActivity(savedId.current);
       savedId.current = null;
     }
     setStatus("idle");

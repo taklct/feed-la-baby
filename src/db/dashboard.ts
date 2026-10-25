@@ -1,5 +1,6 @@
-import type { SQLiteDatabase } from "expo-sqlite";
 import type { RecordType } from "../constants/records";
+import { supabase } from "../lib/supabase";
+import { findFirstBaby } from "./babies";
 
 // t is minutes from local midnight today; negative values are earlier days.
 export type LogRecord = { t: number; type: RecordType; ml?: number };
@@ -25,52 +26,33 @@ export type DashboardData = {
   recent: RecentActivity[];
 };
 
-type BabyRow = {
-  id: string;
-  name: string;
-  date_of_birth: string;
-};
-
-type ActivityRow = {
-  milk_ml: number | null;
-  pee_level: number | null;
-  poop_level: number | null;
-  bath: number;
-  occurred_at: number;
-};
-
 const RECENT_LIMIT = 200;
 const RECENT_TABLE_LIMIT = 5;
 const MS_PER_MINUTE = 60 * 1000;
 
-export async function loadDashboard(
-  db: SQLiteDatabase,
-): Promise<DashboardData> {
-  const baby = await db.getFirstAsync<BabyRow>(
-    `SELECT id, name, date_of_birth
-       FROM babies
-      WHERE deleted_at IS NULL
-      ORDER BY created_at
-      LIMIT 1`,
-  );
+export async function loadDashboard(): Promise<DashboardData> {
+  const baby = await findFirstBaby();
   if (!baby) return { baby: null, records: [], recent: [] };
 
-  const weight = await db.getFirstAsync<{ weight_kg: number }>(
-    `SELECT weight_kg FROM weights
-      WHERE baby_id = ? AND deleted_at IS NULL
-      ORDER BY measurement_date DESC, created_at DESC
-      LIMIT 1`,
-    [baby.id],
-  );
+  const { data: weight, error: weightError } = await supabase
+    .from("weights")
+    .select("weight_kg")
+    .eq("baby_id", baby.id)
+    .is("deleted_at", null)
+    .order("measurement_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (weightError) throw weightError;
 
-  const activities = await db.getAllAsync<ActivityRow>(
-    `SELECT milk_ml, pee_level, poop_level, bath, occurred_at
-       FROM activities
-      WHERE baby_id = ? AND deleted_at IS NULL
-      ORDER BY occurred_at DESC
-      LIMIT ?`,
-    [baby.id, RECENT_LIMIT],
-  );
+  const { data: activities, error: activityError } = await supabase
+    .from("activities")
+    .select("milk_ml, pee_level, poop_level, bath, occurred_at")
+    .eq("baby_id", baby.id)
+    .is("deleted_at", null)
+    .order("occurred_at", { ascending: false })
+    .limit(RECENT_LIMIT);
+  if (activityError) throw activityError;
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -78,15 +60,16 @@ export async function loadDashboard(
 
   const records: LogRecord[] = [];
   const recent: RecentActivity[] = [];
-  for (const activity of activities) {
+  for (const activity of activities ?? []) {
     const t = Math.round((activity.occurred_at - midnight) / MS_PER_MINUTE);
+    const bath = activity.bath === 1;
     if (recent.length < RECENT_TABLE_LIMIT) {
       recent.push({
         t,
         milk: activity.milk_ml,
         pee: activity.pee_level,
         poop: activity.poop_level,
-        bath: activity.bath === 1,
+        bath,
       });
     }
     if (activity.milk_ml !== null) {
@@ -94,7 +77,7 @@ export async function loadDashboard(
     }
     if (activity.pee_level !== null) records.push({ t, type: "pee" });
     if (activity.poop_level !== null) records.push({ t, type: "poop" });
-    if (activity.bath === 1) records.push({ t, type: "bath" });
+    if (bath) records.push({ t, type: "bath" });
   }
 
   return {

@@ -3,7 +3,6 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import {
@@ -24,7 +23,6 @@ import { BottomNav } from "../components/bottom-nav";
 import { COLORS, FONTS } from "../constants/theme";
 import { deleteActivity, updateActivity } from "../db/activities";
 import { loadHistory, type HistoryData, type HistoryRow } from "../db/history";
-import { syncOutbox } from "../db/sync";
 import { formatClock, formatDate } from "../i18n/format";
 import { useI18n } from "../i18n/i18n";
 import { LEVEL_KEYS, type Lang, type MessageKey } from "../i18n/messages";
@@ -129,7 +127,6 @@ function Dash() {
 
 export default function HistoryScreen() {
   const router = useRouter();
-  const db = useSQLiteContext();
   const { t, lang } = useI18n();
   const today = startOfDay(new Date());
   const [selected, setSelected] = useState(today);
@@ -144,14 +141,13 @@ export default function HistoryScreen() {
       selected.getMonth(),
       selected.getDate() + 1,
     ).getTime();
-    setData(await loadHistory(db, selected.getTime(), nextDay));
-  }, [db, selected]);
+    setData(await loadHistory(selected.getTime(), nextDay));
+  }, [selected]);
 
   useFocusEffect(
     useCallback(() => {
       loadDay();
-      syncOutbox(db).then(loadDay);
-    }, [db, loadDay]),
+    }, [loadDay]),
   );
 
   const [editing, setEditing] = useState<HistoryRecord | null>(null);
@@ -247,7 +243,7 @@ export default function HistoryScreen() {
   const saveEdit = async () => {
     if (!editing || !canSaveEdit) return;
     try {
-      await updateActivity(db, editing.id, {
+      await updateActivity(editing.id, {
         milkMl: draft.milk,
         peeLevel: draft.pee,
         poopLevel: draft.poop,
@@ -265,7 +261,7 @@ export default function HistoryScreen() {
   const removeRecord = async () => {
     if (!editing) return;
     try {
-      await deleteActivity(db, editing.id);
+      await deleteActivity(editing.id);
     } catch {
       Alert.alert(t("common.couldNotDelete"), t("common.tryAgain"));
       return;

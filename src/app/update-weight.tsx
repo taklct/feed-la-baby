@@ -3,7 +3,6 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
@@ -50,14 +49,13 @@ const notify = (title: string, message: string) => {
 };
 
 export default function UpdateWeightScreen() {
-  const db = useSQLiteContext();
   const [profile, setProfile] = useState<BabyProfile | null | undefined>(
     undefined,
   );
 
   useEffect(() => {
-    loadBabyProfile(db).then(setProfile);
-  }, [db]);
+    loadBabyProfile().then(setProfile);
+  }, []);
 
   if (profile === undefined) return null;
   if (profile === null) return <Redirect href="/baby-setup" />;
@@ -66,7 +64,6 @@ export default function UpdateWeightScreen() {
 
 function WeightForm({ profile }: { profile: BabyProfile }) {
   const router = useRouter();
-  const db = useSQLiteContext();
   const { t, lang } = useI18n();
   const BABY_NAME = profile.name;
   const BABY_AGE = t("age.old", {
@@ -121,7 +118,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
 
   const save = async (value: number) => {
     try {
-      await addWeight(db, profile.id, value, toDateString(date));
+      await addWeight(profile.id, value, toDateString(date));
     } catch {
       notify(t("common.couldNotSave"), t("common.tryAgain"));
       return;

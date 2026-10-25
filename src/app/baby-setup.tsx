@@ -1,7 +1,6 @@
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { useState, type ReactNode } from "react";
 import {
   Alert,
@@ -57,7 +56,6 @@ export default function BabySetupScreen() {
   const [weight, setWeight] = useState(SAMPLE_WEIGHT);
   const [weightDate, setWeightDate] = useState(today);
   const [status, setStatus] = useState<Status>("idle");
-  const db = useSQLiteContext();
 
   const hasWeight = weight !== "" && !Number.isNaN(parseFloat(weight));
   const canCreate = name.trim().length > 0 && isValidDate(dob);
@@ -80,7 +78,7 @@ export default function BabySetupScreen() {
     setStatus("creating");
     try {
       const parsedWeight = hasWeight ? parseFloat(weight) : NaN;
-      await createBaby(db, {
+      await createBaby({
         name,
         dateOfBirth: dob,
         weightKg: parsedWeight > 0 ? parsedWeight : undefined,

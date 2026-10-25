@@ -1,7 +1,7 @@
 import * as Crypto from "expo-crypto";
-import type { SQLiteDatabase } from "expo-sqlite";
-import { syncOutbox } from "./sync";
-import { getOrCreateLocalUser } from "./users";
+import { getDeviceUserId } from "../lib/device-user";
+import { supabase } from "../lib/supabase";
+import { findFirstBaby } from "./babies";
 
 export type NewActivity = {
   milkMl: number | null;
@@ -11,112 +11,77 @@ export type NewActivity = {
   occurredAt: number;
 };
 
-// Records go to the first (earliest created) baby profile.
-export async function createActivity(db: SQLiteDatabase, input: NewActivity) {
-  const baby = await db.getFirstAsync<{ id: string }>(
-    "SELECT id FROM babies WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1",
-  );
-  if (!baby) throw new Error("No baby profile found");
+const requireBabyId = async (): Promise<string> => {
+  const baby = await findFirstBaby();
+  if (!baby) throw new Error("No baby profile");
+  return baby.id;
+};
 
-  const userId = await getOrCreateLocalUser(db);
+export const createActivity = async (input: NewActivity): Promise<string> => {
+  const babyId = await requireBabyId();
+  const userId = await getDeviceUserId();
   const id = Crypto.randomUUID();
   const now = Date.now();
 
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      `INSERT INTO activities
-         (id, baby_id, milk_ml, pee_level, poop_level, bath, occurred_at,
-          created_by_user_id, updated_by_user_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        baby.id,
-        input.milkMl,
-        input.peeLevel,
-        input.poopLevel,
-        input.bath ? 1 : 0,
-        input.occurredAt,
-        userId,
-        userId,
-        now,
-        now,
-      ],
-    );
-    await db.runAsync(
-      `INSERT INTO sync_outbox (entity_type, entity_id, operation, base_version, queued_at)
-       VALUES ('activity', ?, 'upsert', 0, ?)`,
-      [id, now],
-    );
+  const { error } = await supabase.from("activities").insert({
+    id,
+    baby_id: babyId,
+    created_by_user_id: userId,
+    occurred_at: input.occurredAt,
+    milk_ml: input.milkMl,
+    pee_level: input.peeLevel,
+    poop_level: input.poopLevel,
+    bath: input.bath ? 1 : 0,
+    created_at: now,
+    updated_at: now,
   });
-
-  void syncOutbox(db);
+  if (error) throw error;
   return id;
-}
+};
 
-export async function deleteActivity(db: SQLiteDatabase, id: string) {
-  const now = Date.now();
-
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      "UPDATE activities SET deleted_at = ?, updated_at = ? WHERE id = ?",
-      [now, now, id],
-    );
-    await db.runAsync(
-      `INSERT INTO sync_outbox (entity_type, entity_id, operation, base_version, queued_at)
-       VALUES ('activity', ?, 'delete', 0, ?)
-       ON CONFLICT(entity_type, entity_id)
-       DO UPDATE SET operation = 'delete', queued_at = excluded.queued_at`,
-      [id, now],
-    );
-  });
-
-  void syncOutbox(db);
-}
-
-// Returns the milk amount of the most recent non-deleted milk record, or null.
-export async function loadLastMilkMl(db: SQLiteDatabase) {
-  const row = await db.getFirstAsync<{ milk_ml: number }>(
-    `SELECT milk_ml FROM activities
-      WHERE milk_ml IS NOT NULL AND deleted_at IS NULL
-        AND baby_id = (SELECT id FROM babies WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1)
-      ORDER BY occurred_at DESC LIMIT 1`,
-  );
-  return row?.milk_ml ?? null;
-}
-
-// Updates the amounts and levels of an existing record; occurred_at is not changed.
-export async function updateActivity(
-  db: SQLiteDatabase,
+export const updateActivity = async (
   id: string,
   input: NewActivity,
-) {
-  const userId = await getOrCreateLocalUser(db);
+): Promise<void> => {
+  const userId = await getDeviceUserId();
+  const { error } = await supabase
+    .from("activities")
+    .update({
+      occurred_at: input.occurredAt,
+      milk_ml: input.milkMl,
+      pee_level: input.peeLevel,
+      poop_level: input.poopLevel,
+      bath: input.bath ? 1 : 0,
+      updated_by_user_id: userId,
+      updated_at: Date.now(),
+    })
+    .eq("id", id);
+  if (error) throw error;
+};
+
+// Soft delete so other devices can sync the removal.
+export const deleteActivity = async (id: string): Promise<void> => {
   const now = Date.now();
+  const { error } = await supabase
+    .from("activities")
+    .update({ deleted_at: now, updated_at: now })
+    .eq("id", id);
+  if (error) throw error;
+};
 
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      `UPDATE activities
-          SET milk_ml = ?, pee_level = ?, poop_level = ?, bath = ?,
-              updated_by_user_id = ?, updated_at = ?
-        WHERE id = ?`,
-      [
-        input.milkMl,
-        input.peeLevel,
-        input.poopLevel,
-        input.bath ? 1 : 0,
-        userId,
-        now,
-        id,
-      ],
-    );
-    await db.runAsync(
-      `INSERT INTO sync_outbox (entity_type, entity_id, operation, base_version, queued_at)
-       VALUES ('activity', ?, 'upsert', 0, ?)
-       ON CONFLICT(entity_type, entity_id)
-       DO UPDATE SET operation = 'upsert', queued_at = excluded.queued_at`,
-      [id, now],
-    );
-  });
+export const loadLastMilkMl = async (): Promise<number | null> => {
+  const baby = await findFirstBaby();
+  if (!baby) return null;
 
-  void syncOutbox(db);
-}
+  const { data, error } = await supabase
+    .from("activities")
+    .select("milk_ml")
+    .eq("baby_id", baby.id)
+    .is("deleted_at", null)
+    .not("milk_ml", "is", null)
+    .order("occurred_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.milk_ml ?? null;
+};

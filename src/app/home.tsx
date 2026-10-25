@@ -10,8 +10,6 @@ import {
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { syncOutbox } from "../db/sync";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { RecordIcon } from "../components/record-icon";
 import { TYPE_STYLE, type RecordType } from "../constants/records";
 import { BottomNav } from "../components/bottom-nav";
@@ -145,22 +143,18 @@ function LevelBadge({ type, value }: { type: RecordType; value: number }) {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const db = useSQLiteContext();
   const { t, lang } = useI18n();
   const [data, setData] = useState<DashboardData | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
-        loadDashboard(db).then(setData);
-        syncOutbox(db)
-          .then(() => loadDashboard(db))
-          .then(setData);
+        loadDashboard().then(setData);
       };
       refresh();
       const timer = setInterval(refresh, SYNC_INTERVAL_MS);
       return () => clearInterval(timer);
-    }, [db]),
+    }, []),
   );
 
   if (data === null) return null;

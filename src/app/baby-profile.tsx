@@ -1,6 +1,5 @@
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import {
   useCallback,
@@ -27,7 +26,6 @@ import {
   deleteBabyData,
   loadBabyProfile,
   inviteCodeFor,
-  publishBaby,
   updateBaby,
 } from "../db/babies";
 import { formatDate } from "../i18n/format";
@@ -82,7 +80,6 @@ function DetailRow({
 
 export default function BabyProfileScreen() {
   const router = useRouter();
-  const db = useSQLiteContext();
   const { t, lang, setLang } = useI18n();
   const [profile, setProfile] = useState<BabyProfile | null | undefined>(
     undefined,
@@ -93,15 +90,8 @@ export default function BabyProfileScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const reload = useCallback(() => {
-    loadBabyProfile(db).then((loaded) => {
-      setProfile(loaded);
-      if (loaded) {
-        publishBaby(db, loaded.id).catch((e) =>
-          console.warn("Could not publish baby", e),
-        );
-      }
-    });
-  }, [db]);
+    loadBabyProfile().then(setProfile);
+  }, []);
   useFocusEffect(reload);
 
   if (profile === undefined) return null;
@@ -143,7 +133,7 @@ export default function BabyProfileScreen() {
     if (!draftValid || saving) return;
     setSaving(true);
     try {
-      await updateBaby(db, profile.id, draft);
+      await updateBaby(profile.id, draft);
       setEditOpen(false);
       reload();
     } catch {
@@ -155,7 +145,7 @@ export default function BabyProfileScreen() {
 
   const deleteData = async () => {
     try {
-      await deleteBabyData(db, profile.id);
+      await deleteBabyData(profile.id);
       setConfirmOpen(false);
       reload();
     } catch {
