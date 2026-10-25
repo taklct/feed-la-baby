@@ -73,6 +73,17 @@ export async function deleteActivity(db: SQLiteDatabase, id: string) {
   void syncOutbox(db);
 }
 
+// Returns the milk amount of the most recent non-deleted milk record, or null.
+export async function loadLastMilkMl(db: SQLiteDatabase) {
+  const row = await db.getFirstAsync<{ milk_ml: number }>(
+    `SELECT milk_ml FROM activities
+      WHERE milk_ml IS NOT NULL AND deleted_at IS NULL
+        AND baby_id = (SELECT id FROM babies WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1)
+      ORDER BY occurred_at DESC LIMIT 1`,
+  );
+  return row?.milk_ml ?? null;
+}
+
 // Updates the amounts and levels of an existing record; occurred_at is not changed.
 export async function updateActivity(
   db: SQLiteDatabase,

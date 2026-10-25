@@ -22,7 +22,11 @@ import { RecordIcon } from "../components/record-icon";
 import { DateTimeWheel } from "../components/datetime-wheel";
 import { TYPE_STYLE, type RecordType } from "../constants/records";
 import { COLORS, FONTS } from "../constants/theme";
-import { createActivity, deleteActivity } from "../db/activities";
+import {
+  createActivity,
+  deleteActivity,
+  loadLastMilkMl,
+} from "../db/activities";
 import { loadBabyProfile } from "../db/babies";
 import { formatClock, formatMonthDay } from "../i18n/format";
 import { useI18n, type TranslateFn } from "../i18n/i18n";
@@ -31,7 +35,8 @@ import { LEVEL_KEYS, type Lang } from "../i18n/messages";
 const ACTIVITIES: RecordType[] = ["milk", "pee", "poop", "bath"];
 const MIN_ML = 5;
 const MAX_ML = 400;
-const STEP_ML = 10;
+const DECREASE_STEPS = [-10, -5];
+const INCREASE_STEPS = [5, 10];
 const LAST_MILK_ML = 120;
 const SAVE_DELAY_MS = 500;
 const TOAST_MS = 1000;
@@ -65,6 +70,7 @@ export default function AddRecordScreen() {
   const [selected, setSelected] = useState<RecordType[]>(["milk", "pee"]);
   const [levels, setLevels] = useState({ pee: 3, poop: 3 });
   const [amount, setAmount] = useState<number | null>(LAST_MILK_ML);
+  const [lastMilkMl, setLastMilkMl] = useState(LAST_MILK_ML);
   const [recordedAt, setRecordedAt] = useState(() => new Date());
   const [timeClamped, setTimeClamped] = useState(false);
   const [androidStep, setAndroidStep] = useState<"date" | "time" | null>(null);
@@ -82,6 +88,11 @@ export default function AddRecordScreen() {
 
   useEffect(() => {
     loadBabyProfile(db).then((baby) => setBabyName(baby?.name ?? null));
+    loadLastMilkMl(db).then((ml) => {
+      if (ml === null) return;
+      setLastMilkMl(ml);
+      setAmount(ml);
+    });
   }, [db]);
 
   const milkSelected = selected.includes("milk");
@@ -235,6 +246,7 @@ export default function AddRecordScreen() {
           {milkSelected ? (
             <MilkPanel
               amount={amount}
+              lastMl={lastMilkMl}
               onChangeText={handleAmountText}
               onStep={stepAmount}
             />
@@ -380,10 +392,12 @@ export default function AddRecordScreen() {
 
 function MilkPanel({
   amount,
+  lastMl,
   onChangeText,
   onStep,
 }: {
   amount: number | null;
+  lastMl: number;
   onChangeText: (text: string) => void;
   onStep: (delta: number) => void;
 }) {
@@ -394,7 +408,7 @@ function MilkPanel({
       ? t("add.amountEmpty")
       : !valid
         ? t("add.amountRange", { min: MIN_ML, max: MAX_ML })
-        : t("add.lastRecorded", { ml: LAST_MILK_ML });
+        : t("add.lastRecorded", { ml: lastMl });
   const atMin = amount !== null && amount <= MIN_ML;
   const atMax = amount !== null && amount >= MAX_ML;
 
@@ -406,20 +420,16 @@ function MilkPanel({
       </View>
       <View style={styles.amountCard}>
         <View style={styles.amountRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Decrease by ${STEP_ML} ml`}
-            disabled={atMin}
-            onPress={() => onStep(-STEP_ML)}
-            style={({ pressed }) => [
-              styles.stepButton,
-              styles.stepButtonLight,
-              pressed && styles.pressed,
-              atMin && styles.disabled,
-            ]}
-          >
-            <FontAwesome6 name="minus" size={18} color={COLORS.blue700} />
-          </Pressable>
+          <View style={styles.stepGroup}>
+            {DECREASE_STEPS.map((delta) => (
+              <StepButton
+                key={delta}
+                delta={delta}
+                disabled={atMin}
+                onPress={onStep}
+              />
+            ))}
+          </View>
           <View style={styles.amountField}>
             <TextInput
               value={amount === null ? "" : String(amount)}
@@ -432,26 +442,52 @@ function MilkPanel({
             />
             <Text style={styles.amountUnit}>ml</Text>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Increase by ${STEP_ML} ml`}
-            disabled={atMax}
-            onPress={() => onStep(STEP_ML)}
-            style={({ pressed }) => [
-              styles.stepButton,
-              styles.stepButtonDark,
-              pressed && styles.pressed,
-              atMax && styles.disabled,
-            ]}
-          >
-            <FontAwesome6 name="plus" size={18} color="#FFFFFF" />
-          </Pressable>
+          <View style={styles.stepGroup}>
+            {INCREASE_STEPS.map((delta) => (
+              <StepButton
+                key={delta}
+                delta={delta}
+                disabled={atMax}
+                onPress={onStep}
+              />
+            ))}
+          </View>
         </View>
         <Text style={[styles.amountHint, !valid && styles.amountHintWarn]}>
           {hint}
         </Text>
       </View>
     </View>
+  );
+}
+
+function StepButton({
+  delta,
+  disabled,
+  onPress,
+}: {
+  delta: number;
+  disabled: boolean;
+  onPress: (delta: number) => void;
+}) {
+  const up = delta > 0;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${up ? "Increase" : "Decrease"} by ${Math.abs(delta)} ml`}
+      disabled={disabled}
+      onPress={() => onPress(delta)}
+      style={({ pressed }) => [
+        styles.stepButton,
+        up ? styles.stepButtonDark : styles.stepButtonLight,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+      ]}
+    >
+      <Text style={[styles.stepButtonText, up && styles.stepButtonTextOn]}>
+        {`${up ? "+" : "-"}${Math.abs(delta)}`}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -720,11 +756,23 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   stepButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+  },
+  stepButtonText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.blue700,
+  },
+  stepButtonTextOn: {
+    color: "#FFFFFF",
+  },
+  stepGroup: {
+    flexDirection: "row",
+    gap: 6,
   },
   stepButtonLight: {
     backgroundColor: COLORS.blue50,
