@@ -14,6 +14,7 @@ import { syncOutbox } from "../db/sync";
 import { useSQLiteContext } from "expo-sqlite";
 import { RecordIcon } from "../components/record-icon";
 import { TYPE_STYLE, type RecordType } from "../constants/records";
+import { BottomNav } from "../components/bottom-nav";
 import { COLORS, FONTS } from "../constants/theme";
 import {
   loadDashboard,
@@ -126,38 +127,6 @@ function StatCard({
   );
 }
 
-function NavTab({
-  icon,
-  label,
-  active = false,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="tab"
-      accessibilityState={{ selected: active }}
-      onPress={onPress}
-      style={styles.navTab}
-    >
-      <View style={[styles.navPill, active && styles.navPillActive]}>
-        <FontAwesome6
-          name={icon}
-          size={16}
-          color={active ? COLORS.blue700 : "#8C948F"}
-        />
-      </View>
-      <Text style={[styles.navLabel, active && styles.navLabelActive]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 const TABLE_COLUMNS: { type: RecordType; label: MessageKey }[] = [
   { type: "milk", label: "common.milk" },
   { type: "pee", label: "common.pee" },
@@ -207,8 +176,7 @@ export default function HomeScreen() {
   const ageText = t("age.old", {
     age: ageLabel(parseDate(BABY.dob), now, t),
   });
-  const eligible =
-    BABY.premature === "no" && BABY.doctorPlan === "no" && BABY.weightKg > 0;
+  const eligible = BABY.weightKg > 0;
   const feed = nextFeed(RECORDS, ageDays, BABY.name, t, lang);
   const milkRef = milkReference(BABY.weightKg);
 
@@ -223,10 +191,7 @@ export default function HomeScreen() {
         label: t("home.generalGuidance"),
         value: t("home.every2to4"),
         unit: "",
-        text:
-          BABY.doctorPlan === "yes"
-            ? t("home.doctorPlanText", { name: BABY.name })
-            : t("home.typicalRhythm", { name: BABY.name }),
+        text: t("home.typicalRhythm", { name: BABY.name }),
       };
 
   const today = RECORDS.filter((r) => r.t >= 0);
@@ -489,19 +454,7 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.nav}>
-        <NavTab icon="house" label={t("nav.home")} active />
-        <NavTab
-          icon="clock-rotate-left"
-          label={t("nav.history")}
-          onPress={() => router.navigate("/history")}
-        />
-        <NavTab
-          icon="baby"
-          label={t("nav.baby")}
-          onPress={() => router.navigate("/baby-profile")}
-        />
-      </View>
+      <BottomNav active="home" />
 
       <StatusBar style="dark" />
     </SafeAreaView>
@@ -945,38 +898,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: "center",
     color: COLORS.muted,
-  },
-  nav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-  },
-  navTab: {
-    alignItems: "center",
-    gap: 4,
-  },
-  navPill: {
-    width: 56,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navPillActive: {
-    backgroundColor: COLORS.blue100,
-  },
-  navLabel: {
-    fontFamily: FONTS.body,
-    fontSize: 11,
-    color: "#8C948F",
-  },
-  navLabelActive: {
-    fontFamily: FONTS.bodySemiBold,
-    color: COLORS.blue700,
   },
 });

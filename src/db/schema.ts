@@ -12,10 +12,6 @@ CREATE TABLE IF NOT EXISTS babies (
     owner_user_id                 TEXT,
     name                          TEXT NOT NULL,
     date_of_birth                 TEXT NOT NULL,
-    premature_status              TEXT NOT NULL DEFAULT 'unknown'
-                                  CHECK (premature_status IN ('yes', 'no', 'unknown')),
-    clinician_feeding_plan_status TEXT NOT NULL DEFAULT 'unknown'
-                                  CHECK (clinician_feeding_plan_status IN ('yes', 'no', 'unknown')),
     created_at                    INTEGER NOT NULL,
     updated_at                    INTEGER NOT NULL,
     deleted_at                    INTEGER,

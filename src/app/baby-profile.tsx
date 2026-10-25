@@ -19,6 +19,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BottomNav } from "../components/bottom-nav";
 import { COLORS, FONTS } from "../constants/theme";
 import {
   type BabyDetails,
@@ -41,8 +42,6 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const EMPTY_DRAFT: BabyDetails = {
   name: "",
   dateOfBirth: "",
-  premature: null,
-  clinicianFeedingPlan: null,
 };
 
 const isValidDate = (value: string) =>
@@ -60,38 +59,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 const dateLabel = (date: Date, lang: Lang) => formatDate(date, lang, true);
 
 const shortDateLabel = (date: Date, lang: Lang) => formatDate(date, lang);
-
-function NavTab({
-  icon,
-  label,
-  active = false,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="tab"
-      accessibilityState={{ selected: active }}
-      onPress={onPress}
-      style={styles.navTab}
-    >
-      <View style={[styles.navPill, active && styles.navPillActive]}>
-        <FontAwesome6
-          name={icon}
-          size={16}
-          color={active ? COLORS.blue700 : "#8C948F"}
-        />
-      </View>
-      <Text style={[styles.navLabel, active && styles.navLabelActive]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 function DetailRow({
   icon,
@@ -160,8 +127,6 @@ export default function BabyProfileScreen() {
     setDraft({
       name: profile.name,
       dateOfBirth: profile.dateOfBirth,
-      premature: profile.premature,
-      clinicianFeedingPlan: profile.clinicianFeedingPlan,
     });
     setEditOpen(true);
   };
@@ -395,19 +360,7 @@ export default function BabyProfileScreen() {
         </Pressable>
       </ScrollView>
 
-      <View style={styles.nav}>
-        <NavTab
-          icon="house"
-          label={t("nav.home")}
-          onPress={() => router.navigate("/home")}
-        />
-        <NavTab
-          icon="clock-rotate-left"
-          label={t("nav.history")}
-          onPress={() => router.navigate("/history")}
-        />
-        <NavTab icon="baby" label={t("nav.baby")} active />
-      </View>
+      <BottomNav active="baby" />
 
       <StatusBar style="dark" />
 
@@ -1033,39 +986,6 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
   },
   weightKgActive: {
-    color: COLORS.blue700,
-  },
-  nav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 24,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.line,
-    backgroundColor: "#FFFFFF",
-  },
-  navTab: {
-    alignItems: "center",
-    gap: 4,
-  },
-  navPill: {
-    width: 56,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navPillActive: {
-    backgroundColor: COLORS.blue100,
-  },
-  navLabel: {
-    fontFamily: FONTS.body,
-    fontSize: 11,
-    color: "#8C948F",
-  },
-  navLabelActive: {
-    fontFamily: FONTS.bodySemiBold,
     color: COLORS.blue700,
   },
 });

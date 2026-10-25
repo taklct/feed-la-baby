@@ -83,8 +83,6 @@ export default function BabySetupScreen() {
       await createBaby(db, {
         name,
         dateOfBirth: dob,
-        premature: null,
-        clinicianFeedingPlan: null,
         weightKg: parsedWeight > 0 ? parsedWeight : undefined,
         weightDate: isValidDate(weightDate) ? weightDate : today,
       });

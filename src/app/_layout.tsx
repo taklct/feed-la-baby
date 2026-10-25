@@ -8,6 +8,7 @@ import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { Suspense } from "react";
 import { LanguageProvider } from "../i18n/i18n";
+import { DatabaseBoundary } from "../components/database-boundary";
 import { DATABASE_NAME, initDatabase } from "../db/database";
 
 export default function RootLayout() {
@@ -20,16 +21,18 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <Suspense fallback={null}>
-      <SQLiteProvider
-        databaseName={DATABASE_NAME}
-        onInit={initDatabase}
-        useSuspense
-      >
-        <LanguageProvider>
-          <Stack screenOptions={{ headerShown: false }} />
-        </LanguageProvider>
-      </SQLiteProvider>
-    </Suspense>
+    <DatabaseBoundary>
+      <Suspense fallback={null}>
+        <SQLiteProvider
+          databaseName={DATABASE_NAME}
+          onInit={initDatabase}
+          useSuspense
+        >
+          <LanguageProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+          </LanguageProvider>
+        </SQLiteProvider>
+      </Suspense>
+    </DatabaseBoundary>
   );
 }

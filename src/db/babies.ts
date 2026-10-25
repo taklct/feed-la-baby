@@ -4,19 +4,12 @@ import { supabase } from "../lib/supabase";
 import { syncOutbox } from "./sync";
 import { getOrCreateLocalUser } from "./users";
 
-export type Answer = "yes" | "no" | "unsure";
-
 export type NewBaby = {
   name: string;
   dateOfBirth: string;
-  premature: Answer | null;
-  clinicianFeedingPlan: Answer | null;
   weightKg?: number;
   weightDate?: string;
 };
-
-const toStatus = (answer: Answer | null) =>
-  answer === "yes" || answer === "no" ? answer : "unknown";
 
 export const inviteCodeFor = (babyId: string) =>
   babyId.replace(/-/g, "").slice(0, 6).toUpperCase();
@@ -27,12 +20,10 @@ export async function publishBaby(db: SQLiteDatabase, babyId: string) {
     id: string;
     name: string;
     date_of_birth: string;
-    premature_status: string;
-    clinician_feeding_plan_status: string;
     created_at: number;
     updated_at: number;
   }>(
-    `SELECT id, name, date_of_birth, premature_status, clinician_feeding_plan_status, created_at, updated_at
+    `SELECT id, name, date_of_birth, created_at, updated_at
      FROM babies WHERE id = ?`,
     [babyId],
   );
@@ -86,18 +77,9 @@ export async function createBaby(db: SQLiteDatabase, input: NewBaby) {
   await db.withTransactionAsync(async () => {
     await db.runAsync(
       `INSERT INTO babies
-         (id, owner_user_id, name, date_of_birth, premature_status, clinician_feeding_plan_status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        babyId,
-        userId,
-        input.name.trim(),
-        input.dateOfBirth,
-        toStatus(input.premature),
-        toStatus(input.clinicianFeedingPlan),
-        now,
-        now,
-      ],
+         (id, owner_user_id, name, date_of_birth, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [babyId, userId, input.name.trim(), input.dateOfBirth, now, now],
     );
     await db.runAsync(
       `INSERT INTO baby_members (baby_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)`,
@@ -123,8 +105,6 @@ export async function createBaby(db: SQLiteDatabase, input: NewBaby) {
 export type BabyDetails = {
   name: string;
   dateOfBirth: string;
-  premature: Answer | null;
-  clinicianFeedingPlan: Answer | null;
 };
 
 export type BabyProfile = BabyDetails & {
@@ -136,19 +116,14 @@ type BabyProfileRow = {
   id: string;
   name: string;
   date_of_birth: string;
-  premature_status: string;
-  clinician_feeding_plan_status: string;
 };
-
-const fromStatus = (status: string): Answer =>
-  status === "yes" || status === "no" ? status : "unsure";
 
 // Weights are newest first.
 export async function loadBabyProfile(
   db: SQLiteDatabase,
 ): Promise<BabyProfile | null> {
   const baby = await db.getFirstAsync<BabyProfileRow>(
-    `SELECT id, name, date_of_birth, premature_status, clinician_feeding_plan_status
+    `SELECT id, name, date_of_birth
        FROM babies
       WHERE deleted_at IS NULL
       ORDER BY created_at
@@ -172,8 +147,6 @@ export async function loadBabyProfile(
     id: baby.id,
     name: baby.name,
     dateOfBirth: baby.date_of_birth,
-    premature: fromStatus(baby.premature_status),
-    clinicianFeedingPlan: fromStatus(baby.clinician_feeding_plan_status),
     weights: weights.map((w) => ({
       id: w.id,
       date: w.measurement_date,
@@ -192,17 +165,9 @@ export async function updateBaby(
   await db.withTransactionAsync(async () => {
     await db.runAsync(
       `UPDATE babies
-          SET name = ?, date_of_birth = ?, premature_status = ?,
-              clinician_feeding_plan_status = ?, updated_at = ?
+          SET name = ?, date_of_birth = ?, updated_at = ?
         WHERE id = ?`,
-      [
-        input.name.trim(),
-        input.dateOfBirth,
-        toStatus(input.premature),
-        toStatus(input.clinicianFeedingPlan),
-        now,
-        babyId,
-      ],
+      [input.name.trim(), input.dateOfBirth, now, babyId],
     );
     await db.runAsync(
       `INSERT INTO sync_outbox (entity_type, entity_id, operation, base_version, queued_at)
@@ -220,8 +185,6 @@ export type RemoteBaby = {
   id: string;
   name: string;
   date_of_birth: string;
-  premature_status: string;
-  clinician_feeding_plan_status: string;
   created_at: number;
   updated_at: number;
 };
@@ -233,20 +196,16 @@ export async function saveJoinedBaby(db: SQLiteDatabase, baby: RemoteBaby) {
   await db.withTransactionAsync(async () => {
     await db.runAsync(
       `INSERT INTO babies
-         (id, owner_user_id, name, date_of_birth, premature_status, clinician_feeding_plan_status, created_at, updated_at)
-       VALUES (?, NULL, ?, ?, ?, ?, ?, ?)
+         (id, owner_user_id, name, date_of_birth, created_at, updated_at)
+       VALUES (?, NULL, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET
          name = excluded.name,
          date_of_birth = excluded.date_of_birth,
-         premature_status = excluded.premature_status,
-         clinician_feeding_plan_status = excluded.clinician_feeding_plan_status,
          updated_at = excluded.updated_at`,
       [
         baby.id,
         baby.name,
         baby.date_of_birth,
-        baby.premature_status,
-        baby.clinician_feeding_plan_status,
         baby.created_at,
         baby.updated_at,
       ],

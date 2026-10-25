@@ -17,8 +17,6 @@ const PULL_COLUMNS = {
     "id",
     "name",
     "date_of_birth",
-    "premature_status",
-    "clinician_feeding_plan_status",
     "created_at",
     "updated_at",
     "deleted_at",

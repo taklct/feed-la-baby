@@ -60,7 +60,6 @@ const en = {
     "General formula reference based on {name}'s age and weight.",
   "home.generalGuidance": "General Feeding Guidance",
   "home.every2to4": "Every 2–4 hrs",
-  "home.doctorPlanText": "Follow the feeding plan from {name}'s doctor.",
   "home.typicalRhythm":
     "Typical rhythm at this age. Add {name}'s weight in the profile for a personalized reference.",
   "home.cueNote": "Follow your baby's hunger and fullness cues.",
@@ -136,8 +135,6 @@ const en = {
   "baby.name": "Name",
   "baby.dob": "Date of Birth",
   "baby.age": "Age",
-  "baby.premature": "Born prematurely",
-  "baby.plan": "Doctor's feeding plan",
   "baby.weight": "Weight",
   "baby.currentWeight": "Current Weight",
   "baby.lastUpdated": "Last updated: {date}",
@@ -153,8 +150,6 @@ const en = {
   "baby.deleteData": "Delete Baby Data",
   "baby.editTitle": "Edit Baby Profile",
   "baby.namePlaceholder": "Baby's name",
-  "baby.prematureQuestion": "Born prematurely?",
-  "baby.planQuestion": "Doctor gave a feeding plan?",
   "baby.deleteTitle": "Delete baby data?",
   "baby.deleteBody":
     "This removes the baby profile, weights and activity records from this device. This cannot be undone.",
@@ -278,7 +273,6 @@ const zh: Record<MessageKey, string> = {
   "home.milkRefText": "依據{name}的年齡與體重的一般配方奶參考值。",
   "home.generalGuidance": "一般餵食指引",
   "home.every2to4": "每 2–4 小時",
-  "home.doctorPlanText": "請依照{name}的醫生餵食計畫進行。",
   "home.typicalRhythm":
     "這個年齡的一般節奏。在BB資料中加入體重，即可獲得個人化參考。",
   "home.cueNote": "留意BB的飢餓與飽足訊號。",
@@ -352,8 +346,6 @@ const zh: Record<MessageKey, string> = {
   "baby.name": "名字",
   "baby.dob": "出生日期",
   "baby.age": "年齡",
-  "baby.premature": "早產",
-  "baby.plan": "醫生的餵食計畫",
   "baby.weight": "體重",
   "baby.currentWeight": "目前體重",
   "baby.lastUpdated": "最後更新：{date}",
@@ -369,8 +361,6 @@ const zh: Record<MessageKey, string> = {
   "baby.deleteData": "刪除BB資料",
   "baby.editTitle": "編輯BB資料",
   "baby.namePlaceholder": "BB的名字",
-  "baby.prematureQuestion": "是否早產？",
-  "baby.planQuestion": "醫生是否給了餵食計畫？",
   "baby.deleteTitle": "要刪除BB資料嗎？",
   "baby.deleteBody": "這會從此裝置移除BB資料、體重與活動紀錄，且無法復原。",
 

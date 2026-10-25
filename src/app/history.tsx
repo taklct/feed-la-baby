@@ -5,7 +5,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
-import { type ComponentProps, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Alert,
   Modal,
@@ -20,6 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RecordIcon } from "../components/record-icon";
 import { TYPE_STYLE, type RecordType } from "../constants/records";
+import { BottomNav } from "../components/bottom-nav";
 import { COLORS, FONTS } from "../constants/theme";
 import { deleteActivity, updateActivity } from "../db/activities";
 import { loadHistory, type HistoryData, type HistoryRow } from "../db/history";
@@ -27,7 +28,6 @@ import { formatClock, formatDate } from "../i18n/format";
 import { useI18n } from "../i18n/i18n";
 import { LEVEL_KEYS, type Lang, type MessageKey } from "../i18n/messages";
 
-type IconName = ComponentProps<typeof FontAwesome6>["name"];
 type FilterKey = "all" | "milk" | "diaper" | "bath";
 type HistoryRecord = {
   id: string;
@@ -79,38 +79,6 @@ const toRecord = (row: HistoryRow): HistoryRecord => ({
   poop: row.poop,
   bath: row.bath,
 });
-
-function NavTab({
-  icon,
-  label,
-  active = false,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="tab"
-      accessibilityState={{ selected: active }}
-      onPress={onPress}
-      style={styles.navTab}
-    >
-      <View style={[styles.navPill, active && styles.navPillActive]}>
-        <FontAwesome6
-          name={icon}
-          size={16}
-          color={active ? COLORS.blue700 : "#8C948F"}
-        />
-      </View>
-      <Text style={[styles.navLabel, active && styles.navLabelActive]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 function SummaryCell({
   type,
@@ -601,19 +569,7 @@ export default function HistoryScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.nav}>
-        <NavTab
-          icon="house"
-          label="Home"
-          onPress={() => router.navigate("/home")}
-        />
-        <NavTab icon="clock-rotate-left" label="History" active />
-        <NavTab
-          icon="baby"
-          label="Baby"
-          onPress={() => router.navigate("/baby-profile")}
-        />
-      </View>
+      <BottomNav active="history" />
 
       <Modal
         visible={editing !== null}
@@ -1293,38 +1249,5 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
-  },
-  nav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.line,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-  },
-  navTab: {
-    alignItems: "center",
-    gap: 4,
-  },
-  navPill: {
-    width: 56,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navPillActive: {
-    backgroundColor: COLORS.blue100,
-  },
-  navLabel: {
-    fontFamily: FONTS.body,
-    fontSize: 11,
-    color: "#8C948F",
-  },
-  navLabelActive: {
-    fontFamily: FONTS.bodySemiBold,
-    color: COLORS.blue700,
   },
 });

@@ -8,8 +8,6 @@ export type DashboardBaby = {
   name: string;
   dob: string;
   weightKg: number;
-  premature: string;
-  doctorPlan: string;
 };
 
 // One row per saved activity, used by the Recent Activities table.
@@ -31,8 +29,6 @@ type BabyRow = {
   id: string;
   name: string;
   date_of_birth: string;
-  premature_status: string;
-  clinician_feeding_plan_status: string;
 };
 
 type ActivityRow = {
@@ -51,7 +47,7 @@ export async function loadDashboard(
   db: SQLiteDatabase,
 ): Promise<DashboardData> {
   const baby = await db.getFirstAsync<BabyRow>(
-    `SELECT id, name, date_of_birth, premature_status, clinician_feeding_plan_status
+    `SELECT id, name, date_of_birth
        FROM babies
       WHERE deleted_at IS NULL
       ORDER BY created_at
@@ -106,8 +102,6 @@ export async function loadDashboard(
       name: baby.name,
       dob: baby.date_of_birth,
       weightKg: weight?.weight_kg ?? 0,
-      premature: baby.premature_status,
-      doctorPlan: baby.clinician_feeding_plan_status,
     },
     records,
     recent,
