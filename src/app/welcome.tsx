@@ -2,7 +2,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useSQLiteContext } from "expo-sqlite";
+import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

@@ -28,6 +28,7 @@ export class DatabaseBoundary extends Component<Props, State> {
           <Text style={styles.body}>
             Close other windows or tabs of this app, then try again.
           </Text>
+          <Text style={styles.detail}>{this.state.error.message}</Text>
           <Pressable style={styles.button} onPress={this.retry}>
             <Text style={styles.buttonText}>Retry</Text>
           </Pressable>
@@ -49,6 +50,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 18, fontWeight: "600", textAlign: "center" },
   body: { fontSize: 14, textAlign: "center", opacity: 0.7 },
+  detail: { fontSize: 12, textAlign: "center", opacity: 0.5 },
   button: {
     marginTop: 8,
     paddingVertical: 10,

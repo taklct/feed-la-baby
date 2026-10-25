@@ -1,6 +1,6 @@
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import {
   useCallback,

@@ -1,7 +1,7 @@
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useSQLiteContext } from "expo-sqlite";
+import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { useState, type ReactNode } from "react";
 import {
   Alert,

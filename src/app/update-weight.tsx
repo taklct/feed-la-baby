@@ -3,7 +3,7 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {

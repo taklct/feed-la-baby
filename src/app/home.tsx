@@ -11,7 +11,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { syncOutbox } from "../db/sync";
-import { useSQLiteContext } from "expo-sqlite";
+import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { RecordIcon } from "../components/record-icon";
 import { TYPE_STYLE, type RecordType } from "../constants/records";
 import { BottomNav } from "../components/bottom-nav";

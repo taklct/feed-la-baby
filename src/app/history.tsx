@@ -3,7 +3,7 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { useAppDb as useSQLiteContext } from "../db/app-db";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import {
@@ -24,6 +24,7 @@ import { BottomNav } from "../components/bottom-nav";
 import { COLORS, FONTS } from "../constants/theme";
 import { deleteActivity, updateActivity } from "../db/activities";
 import { loadHistory, type HistoryData, type HistoryRow } from "../db/history";
+import { syncOutbox } from "../db/sync";
 import { formatClock, formatDate } from "../i18n/format";
 import { useI18n } from "../i18n/i18n";
 import { LEVEL_KEYS, type Lang, type MessageKey } from "../i18n/messages";
@@ -149,7 +150,8 @@ export default function HistoryScreen() {
   useFocusEffect(
     useCallback(() => {
       loadDay();
-    }, [loadDay]),
+      syncOutbox(db).then(loadDay);
+    }, [db, loadDay]),
   );
 
   const [editing, setEditing] = useState<HistoryRecord | null>(null);
@@ -760,7 +762,11 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     backgroundColor: "rgba(20, 32, 44, 0.35)",
   },
   sheet: {
