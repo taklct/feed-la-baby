@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { COLORS } from "../constants/theme";
 import { formatMonthDay } from "../i18n/format";
 import { useI18n, type TranslateFn } from "../i18n/i18n";
+import type { Lang } from "../i18n/messages";
 
 const ITEM_H = 40;
 const VISIBLE = 5;
@@ -13,6 +14,7 @@ type Props = {
   value: Date;
   maximum: Date;
   onChange: (date: Date) => void;
+  dateOnly?: boolean;
 };
 
 const startOfDay = (date: Date) =>
@@ -31,7 +33,12 @@ const hourLabel = (hour: number) => String(hour).padStart(2, "0");
 
 const minuteLabel = (minute: number) => String(minute).padStart(2, "0");
 
-export function DateTimeWheel({ value, maximum, onChange }: Props) {
+export function DateTimeWheel({
+  value,
+  maximum,
+  onChange,
+  dateOnly = false,
+}: Props) {
   const { t, lang } = useI18n();
   const days = Array.from({ length: DAYS_BACK + 1 }, (_, i) => {
     const offset = DAYS_BACK - i;
@@ -84,16 +91,20 @@ export function DateTimeWheel({ value, maximum, onChange }: Props) {
         index={dayIndex}
         onSelect={(i) => withDay(days[i])}
       />
-      <Column
-        labels={Array.from({ length: 24 }, (_, h) => hourLabel(h))}
-        index={value.getHours()}
-        onSelect={withHour}
-      />
-      <Column
-        labels={Array.from({ length: 60 }, (_, m) => minuteLabel(m))}
-        index={value.getMinutes()}
-        onSelect={withMinute}
-      />
+      {dateOnly ? null : (
+        <>
+          <Column
+            labels={Array.from({ length: 24 }, (_, h) => hourLabel(h))}
+            index={value.getHours()}
+            onSelect={withHour}
+          />
+          <Column
+            labels={Array.from({ length: 60 }, (_, m) => minuteLabel(m))}
+            index={value.getMinutes()}
+            onSelect={withMinute}
+          />
+        </>
+      )}
       <View style={styles.band} pointerEvents="none" />
     </View>
   );

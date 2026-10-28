@@ -6,12 +6,12 @@ import { COLORS, FONTS } from "../constants/theme";
 import { useI18n } from "../i18n/i18n";
 
 type IconName = ComponentProps<typeof FontAwesome6>["name"];
-type Tab = "home" | "history" | "baby";
+type Tab = "home" | "history" | "dashboard" | "baby";
 
 const TABS: {
   key: Tab;
   icon: IconName;
-  labelKey: "nav.home" | "nav.history" | "nav.baby";
+  labelKey: "nav.home" | "nav.history" | "nav.dashboard" | "nav.baby";
   route: string;
 }[] = [
   { key: "home", icon: "house", labelKey: "nav.home", route: "/home" },
@@ -20,6 +20,12 @@ const TABS: {
     icon: "clock-rotate-left",
     labelKey: "nav.history",
     route: "/history",
+  },
+  {
+    key: "dashboard",
+    icon: "chart-simple",
+    labelKey: "nav.dashboard",
+    route: "/dashboard",
   },
   { key: "baby", icon: "baby", labelKey: "nav.baby", route: "/baby-profile" },
 ];

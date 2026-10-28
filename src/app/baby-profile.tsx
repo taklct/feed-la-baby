@@ -27,6 +27,7 @@ import {
   loadBabyProfile,
   inviteCodeFor,
   updateBaby,
+  updateDailyMilkRef,
 } from "../db/babies";
 import { formatDate } from "../i18n/format";
 import { useI18n } from "../i18n/i18n";
@@ -88,6 +89,8 @@ export default function BabyProfileScreen() {
   const [draft, setDraft] = useState<BabyDetails>(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [milkOpen, setMilkOpen] = useState(false);
+  const [milkDraft, setMilkDraft] = useState("");
 
   const reload = useCallback(() => {
     loadBabyProfile().then(setProfile);
@@ -123,6 +126,30 @@ export default function BabyProfileScreen() {
 
   const updateDraft = (changes: Partial<BabyDetails>) =>
     setDraft((current) => ({ ...current, ...changes }));
+
+  const milkValue = milkDraft === "" ? null : parseInt(milkDraft, 10);
+  const milkValid = milkValue === null || (milkValue >= 1 && milkValue <= 300);
+
+  const openMilkRef = () => {
+    setMilkDraft(
+      profile.dailyMilkRefMl === null ? "" : String(profile.dailyMilkRefMl),
+    );
+    setMilkOpen(true);
+  };
+
+  const saveMilkRef = async () => {
+    if (!milkValid || saving) return;
+    setSaving(true);
+    try {
+      await updateDailyMilkRef(profile.id, milkValue);
+      setMilkOpen(false);
+      reload();
+    } catch {
+      Alert.alert(t("common.couldNotSave"), t("common.tryAgain"));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDobChange = (text: string) =>
     updateDraft({
@@ -211,13 +238,30 @@ export default function BabyProfileScreen() {
           />
         </View>
 
+        <Text style={styles.sectionTitle}>{t("baby.dailyMilkRef")}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={openMilkRef}
+          style={({ pressed }) => [
+            styles.shareButton,
+            pressed && styles.pressed,
+          ]}
+        >
+          <FontAwesome6 name="bottle-water" size={13} color={COLORS.blue700} />
+          <Text style={styles.shareText}>
+            {profile.dailyMilkRefMl === null
+              ? t("baby.dailyMilkRefNotSet")
+              : `${profile.dailyMilkRefMl} ml/kg`}
+          </Text>
+        </Pressable>
+
         <Text style={styles.sectionTitle}>{t("baby.weight")}</Text>
         <View style={styles.weightCard}>
           {latest ? (
             <>
               <Text style={styles.cardKicker}>{t("baby.currentWeight")}</Text>
               <View style={styles.weightRow}>
-                <Text style={styles.weightValue}>{latest.kg.toFixed(1)}</Text>
+                <Text style={styles.weightValue}>{latest.kg.toFixed(2)}</Text>
                 <Text style={styles.weightUnit}>kg</Text>
               </View>
               <Text style={styles.weightUpdated}>
@@ -274,7 +318,7 @@ export default function BabyProfileScreen() {
                         isLatest && styles.weightKgActive,
                       ]}
                     >
-                      {w.kg.toFixed(1)} kg
+                      {w.kg.toFixed(2)} kg
                     </Text>
                   </View>
                 );
@@ -406,6 +450,60 @@ export default function BabyProfileScreen() {
                 style={({ pressed }) => [
                   styles.saveButton,
                   (!draftValid || saving) && styles.saveDisabled,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.saveText}>{t("common.saveChanges")}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={milkOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setMilkOpen(false)}
+      >
+        <View style={styles.modalRoot}>
+          <Pressable
+            style={styles.backdrop}
+            onPress={() => setMilkOpen(false)}
+          />
+          <View style={styles.sheet}>
+            <View style={styles.handle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>{t("baby.dailyMilkRef")}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+                onPress={() => setMilkOpen(false)}
+                style={styles.sheetClose}
+              >
+                <FontAwesome6 name="xmark" size={16} color={COLORS.muted} />
+              </Pressable>
+            </View>
+            <View style={styles.sheetBody}>
+              <Field label={t("baby.dailyMilkRefLabel")}>
+                <TextInput
+                  value={milkDraft}
+                  onChangeText={(text) =>
+                    setMilkDraft(text.replace(/\D/g, "").slice(0, 4))
+                  }
+                  placeholder={t("baby.dailyMilkRefPlaceholder")}
+                  placeholderTextColor={COLORS.placeholder}
+                  keyboardType="number-pad"
+                  style={styles.input}
+                />
+              </Field>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!milkValid || saving}
+                onPress={saveMilkRef}
+                style={({ pressed }) => [
+                  styles.saveButton,
+                  (!milkValid || saving) && styles.saveDisabled,
                   pressed && styles.pressed,
                 ]}
               >

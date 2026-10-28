@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { 50: '#F0F6FC', 100: '#E1EEF9', 200: '#C6DDF1', 300: '#A7C7E7', 500: '#7BA7D1', 600: '#5B8DBE', 700: '#3A6A99', 800: '#2C537A' },
+            sky: { soft: '#E0F2EF', ink: '#2E7D74' },
+            sand: { soft: '#F4ECE2', ink: '#86654A' },
+            cream: '#FAF9F6',
+            line: '#ECEAE5',
+            ink: '#2F3A35',
+            muted: '#6B746F'
+          },
+          fontFamily: {
+            display: ['Fraunces', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    #dash-scroll::-webkit-scrollbar, .tbl-scroll::-webkit-scrollbar { display: none; }
+    #dash-scroll, .tbl-scroll { scrollbar-width: none; }
+    input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  </style>
+</head>
+<body class="bg-cream font-sans text-ink antialiased">
+  <main id="dashboard-screen" class="relative mx-auto flex h-[852px] w-full max-w-[430px] flex-col overflow-hidden bg-cream">
+
+    <div aria-hidden="true" class="pointer-events-none absolute -top-32 -left-24 h-[300px] w-[300px] rounded-full bg-sage-100/70 blur-3xl"></div>
+
+    <div id="dash-scroll" class="relative z-10 flex-1 overflow-y-auto px-5 pb-8">
+
+      <!-- Header -->
+      <header id="header" class="flex items-end justify-between gap-3 pt-12">
+        <div>
+          <h1 class="font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink">Dashboard</h1>
+          <p class="text-[14px] text-muted">Emma's trends at a glance</p>
+        </div>
+        <span id="sync-status" class="mb-1 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-muted ring-1 ring-line">
+          <i class="fa-solid fa-cloud-arrow-up text-[10px] text-sage-600"></i><span id="sync-text">Synced</span>
+        </span>
+      </header>
+
+      <!-- Shared period -->
+      <div id="period-row" class="mt-4 flex items-center justify-between gap-2">
+        <div id="period-seg" role="radiogroup" aria-label="Period" class="flex gap-1 rounded-xl bg-white p-1 ring-1 ring-line">
+          <button type="button" data-period="7" class="period h-8 rounded-lg px-3 text-[13px] font-semibold transition">7 Days</button>
+          <button type="button" data-period="30" class="period h-8 rounded-lg px-3 text-[13px] font-semibold transition">30 Days</button>
+          <button type="button" data-period="custom" class="period h-8 rounded-lg px-3 text-[13px] font-semibold transition">Custom</button>
+        </div>
+        <span id="range-label" class="text-[12px] font-medium text-muted">Last 7 days</span>
+      </div>
+      <div id="custom-range" class="mt-2 hidden grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div class="relative"><div class="flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-3 text-[13px] font-semibold"><i class="fa-regular fa-calendar text-[12px] text-sage-700"></i><span id="from-label">—</span></div><input id="from-input" type="date" aria-label="From date" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" /></div>
+        <span class="text-[12px] text-muted">to</span>
+        <div class="relative"><div class="flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-3 text-[13px] font-semibold"><i class="fa-regular fa-calendar text-[12px] text-sage-700"></i><span id="to-label">—</span></div><input id="to-input" type="date" aria-label="To date" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" /></div>
+      </div>
+
+      <!-- ===== Activity ===== -->
+      <section id="activity-card" class="mt-3 rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-22px_rgba(58,106,153,0.45)]">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-[19px] font-semibold tracking-[-0.01em] text-ink">Activity</h2>
+          <div role="radiogroup" aria-label="Activity display" class="view-seg flex gap-1 rounded-lg bg-sage-50 p-0.5" data-scope="a">
+            <button type="button" data-view="chart" aria-label="Chart" class="view h-7 w-8 rounded-md text-[12px] transition"><i class="fa-solid fa-chart-column"></i></button>
+            <button type="button" data-view="table" aria-label="Table" class="view h-7 w-8 rounded-md text-[12px] transition"><i class="fa-solid fa-table-list"></i></button>
+          </div>
+        </div>
+        <p class="mt-0.5 text-[11px] text-muted">Daily averages · tap one to chart it</p>
+
+        <!-- Average tiles = metric selector -->
+        <div id="a-tiles" class="mt-3 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Metric"></div>
+
+        <!-- Chart -->
+        <div id="a-chart-view" class="mt-3">
+          <p class="flex items-baseline gap-2 text-[12px] text-muted"><span id="readout-date">—</span><span id="readout-value" class="font-display text-[17px] font-semibold text-sage-700">—</span></p>
+          <div id="activity-chart" class="h-[200px] w-full"></div>
+          <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted">
+            <span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm border border-sage-500 bg-[repeating-linear-gradient(45deg,#C6DDF1_0,#C6DDF1_2px,#fff_2px,#fff_4px)]"></span>Today · in progress</span>
+            <span class="flex items-center gap-1"><span class="font-bold text-[#A9B6BE]">—</span>No records</span>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div id="a-table-view" class="mt-3 hidden overflow-hidden rounded-xl border border-line">
+          <div class="tbl-scroll max-h-[300px] overflow-y-auto">
+            <table class="w-full table-fixed border-collapse">
+              <colgroup><col class="w-[28%]" /><col class="w-[22%]" /><col class="w-[16%]" /><col class="w-[17%]" /><col class="w-[17%]" /></colgroup>
+              <thead>
+                <tr class="text-[10px] font-bold uppercase tracking-[0.06em] text-sage-700">
+                  <th scope="col" class="sticky top-0 bg-sage-50 py-2 pl-3 text-left">Date</th>
+                  <th scope="col" class="sticky top-0 bg-sage-50 py-2 text-right">Milk <span class="normal-case">ml</span></th>
+                  <th scope="col" class="sticky top-0 bg-sage-50 py-2 text-right">Feeds</th>
+                  <th scope="col" class="sticky top-0 bg-sage-50 py-2 text-right">Pee</th>
+                  <th scope="col" class="sticky top-0 bg-sage-50 py-2 pr-3 text-right">Poop</th>
+                </tr>
+              </thead>
+              <tbody id="a-tbody" class="divide-y divide-line"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Growth ===== -->
+      <section id="growth-card" class="mt-3 rounded-2xl border border-line bg-white p-4 shadow-[0_10px_26px_-22px_rgba(58,106,153,0.45)]">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-[19px] font-semibold tracking-[-0.01em] text-ink">Growth</h2>
+          <div role="radiogroup" aria-label="Growth display" class="view-seg flex gap-1 rounded-lg bg-sage-50 p-0.5" data-scope="g">
+            <button type="button" data-view="chart" aria-label="Chart" class="view h-7 w-8 rounded-md text-[12px] transition"><i class="fa-solid fa-chart-line"></i></button>
+            <button type="button" data-view="table" aria-label="Table" class="view h-7 w-8 rounded-md text-[12px] transition"><i class="fa-solid fa-table-list"></i></button>
+          </div>
+        </div>
+        <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
+          <span>Emma · 2 months</span>
+          <span class="text-line">|</span>
+          <span id="last-measured">Last measured 18 Oct</span>
+          <span class="rounded-full bg-sage-50 px-2 py-0.5 text-[10px] font-semibold text-sage-700 ring-1 ring-sage-200"><i class="fa-solid fa-venus mr-1 text-[9px]"></i>HK2020 girls</span>
+        </div>
+
+        <!-- Latest measurement tiles = measurement selector -->
+        <div id="g-tiles" class="mt-3 grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Measurement"></div>
+
+        <!-- Growth insights for the selected measurement (always visible, no extra tap) -->
+        <div id="g-stats" class="mt-2.5 grid grid-cols-3 divide-x divide-line rounded-xl bg-cream py-2.5 ring-1 ring-line"></div>
+
+        <!-- Chart -->
+        <div id="g-chart-view" class="mt-3">
+          <p id="growth-readout" class="text-[12px] text-muted">Tap a point for age, date and value</p>
+          <div id="growth-chart" class="h-[230px] w-full"></div>
+          <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted">
+            <span class="flex items-center gap-1"><span class="h-[3px] w-4 rounded-full bg-sage-500"></span>Emma</span>
+            <span class="flex items-center gap-1"><span class="h-2.5 w-4 rounded-sm bg-sage-100 ring-1 ring-sage-200"></span>15th–85th</span>
+            <span class="flex items-center gap-1"><span class="h-px w-4 bg-[#C3CDD3]"></span>3rd · 50th · 97th</span>
+          </div>
+          <p class="mt-2 flex items-start gap-1.5 text-[10px] leading-relaxed text-[#8A6420]"><i class="fa-solid fa-circle-info mt-0.5"></i>Placeholder curves for this mockup — the app will use verified HK2020 data. For reference only, not a diagnosis.</p>
+        </div>
+
+        <!-- Table -->
+        <div id="g-table-view" class="mt-3 hidden overflow-hidden rounded-xl border border-line">
+          <table class="w-full table-fixed border-collapse">
+            <colgroup><col class="w-[20%]" /><col class="w-[22%]" /><col class="w-[20%]" /><col class="w-[19%]" /><col class="w-[19%]" /></colgroup>
+            <thead class="bg-sage-50">
+              <tr class="text-[10px] font-bold uppercase tracking-[0.05em] text-sage-700">
+                <th scope="col" class="py-2 pl-3 text-left">Date</th>
+                <th scope="col" class="py-2 text-left">Age</th>
+                <th scope="col" class="py-2 text-right">Weight</th>
+                <th scope="col" class="py-2 text-right">Length</th>
+                <th scope="col" class="py-2 pr-3 text-right">Head</th>
+              </tr>
+            </thead>
+            <tbody id="g-tbody" class="divide-y divide-line"></tbody>
+          </table>
+          <p class="border-t border-line px-3 py-2 text-center text-[11px] text-muted">Tap a row to edit</p>
+        </div>
+
+        <button id="add-measure-btn" type="button" data-navigate="S07-update-growth" class="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border-[1.5px] border-sage-700 bg-white text-[14px] font-semibold text-sage-700 transition hover:bg-sage-50 active:scale-[0.98]">
+          <i class="fa-solid fa-plus text-[12px]"></i>Add Measurement
+        </button>
+      </section>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite" class="pointer-events-none absolute inset-x-5 bottom-[100px] z-[60] flex translate-y-3 items-center gap-2.5 rounded-2xl bg-ink px-4 py-3.5 text-[14px] font-medium text-white opacity-0 shadow-[0_16px_30px_-12px_rgba(47,58,53,0.6)] transition duration-300">
+      <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sage-300 text-ink"><i class="fa-solid fa-check text-[11px]"></i></span><span id="toast-text">Measurement updated</span>
+    </div>
+
+    <!-- Bottom navigation -->
+    <nav id="bottom-nav" aria-label="Main" class="relative z-20 border-t border-line bg-white/95 px-4 pb-6 pt-2 backdrop-blur">
+      <ul class="grid grid-cols-4">
+        <li><button id="tab-home" type="button" data-navigate="S03-home" class="mx-auto flex flex-col items-center gap-1 text-[#8C948F] hover:text-ink"><span class="flex h-8 w-14 items-center justify-center"><i class="fa-solid fa-house text-[16px]"></i></span><span class="text-[11px] font-medium">Home</span></button></li>
+        <li><button id="tab-history" type="button" data-navigate="S05-history" class="mx-auto flex flex-col items-center gap-1 text-[#8C948F] hover:text-ink"><span class="flex h-8 w-14 items-center justify-center"><i class="fa-solid fa-clock-rotate-left text-[16px]"></i></span><span class="text-[11px] font-medium">History</span></button></li>
+        <li><button id="tab-dashboard" type="button" aria-current="page" class="mx-auto flex flex-col items-center gap-1 text-sage-700"><span class="flex h-8 w-14 items-center justify-center rounded-full bg-sage-100"><i class="fa-solid fa-chart-simple text-[16px]"></i></span><span class="text-[11px] font-semibold">Dashboard</span></button></li>
+        <li><button id="tab-baby" type="button" data-navigate="S06-baby-profile" class="mx-auto flex flex-col items-center gap-1 text-[#8C948F] hover:text-ink"><span class="flex h-8 w-14 items-center justify-center"><i class="fa-solid fa-baby text-[16px]"></i></span><span class="text-[11px] font-medium">Baby</span></button></li>
+      </ul>
+    </nav>
+
+    <!-- Edit measurement sheet -->
+    <div id="edit-sheet" class="pointer-events-none absolute inset-0 z-40 opacity-0 transition duration-300" aria-hidden="true">
+      <div data-close class="absolute inset-0 bg-ink/35"></div>
+      <div id="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title" class="absolute inset-x-0 bottom-0 translate-y-8 rounded-t-[28px] bg-white px-6 pb-8 pt-3 transition duration-300">
+        <div class="mx-auto h-1.5 w-10 rounded-full bg-line"></div>
+        <div class="mt-4 flex items-center justify-between">
+          <div>
+            <h3 id="sheet-title" class="font-display text-[22px] font-semibold text-ink">Edit Measurement</h3>
+            <p id="sheet-sub" class="text-[13px] text-muted">18 Oct · 2 months</p>
+          </div>
+          <button type="button" data-close aria-label="Close" class="flex h-10 w-10 items-center justify-center rounded-full bg-cream text-muted hover:text-ink"><i class="fa-solid fa-xmark text-[15px]"></i></button>
+        </div>
+        <div class="mt-5 grid grid-cols-3 gap-2.5">
+          <div>
+            <label for="edit-weight" class="mb-2 block text-[13px] font-semibold text-ink">Weight</label>
+            <div class="relative"><input id="edit-weight" type="text" inputmode="decimal" placeholder="—" class="h-12 w-full rounded-[14px] border border-line bg-white pl-3 pr-8 text-[16px] font-semibold text-ink focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" /><span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-muted">kg</span></div>
+          </div>
+          <div>
+            <label for="edit-length" class="mb-2 block text-[13px] font-semibold text-ink">Length</label>
+            <div class="relative"><input id="edit-length" type="text" inputmode="decimal" placeholder="—" class="h-12 w-full rounded-[14px] border border-line bg-white pl-3 pr-8 text-[16px] font-semibold text-ink focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" /><span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-muted">cm</span></div>
+          </div>
+          <div>
+            <label for="edit-head" class="mb-2 block text-[13px] font-semibold text-ink">Head</label>
+            <div class="relative"><input id="edit-head" type="text" inputmode="decimal" placeholder="—" class="h-12 w-full rounded-[14px] border border-line bg-white pl-3 pr-8 text-[16px] font-semibold text-ink focus:border-sage-500 focus:outline-none focus:ring-4 focus:ring-sage-100" /><span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-muted">cm</span></div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="edit-date" class="mb-2 block text-[13px] font-semibold text-ink">Measurement date</label>
+          <div class="relative"><div class="flex h-12 items-center gap-3 rounded-[14px] border border-line bg-white px-4"><i class="fa-regular fa-calendar text-[14px] text-sage-700"></i><span id="edit-date-label" class="flex-1 text-[15px] font-semibold text-ink">18 October 2026</span></div><input id="edit-date" type="date" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" /></div>
+        </div>
+        <p id="edit-error" class="mt-3 hidden text-[12px] font-medium text-[#A0603F]">Enter at least one measurement — the others can be left blank.</p>
+        <button id="edit-save" type="button" class="mt-6 flex h-14 w-full items-center justify-center rounded-2xl bg-sage-700 text-[17px] font-semibold text-white transition hover:bg-sage-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-[#BCD0E4]">Save Changes</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+      const pad = n => String(n).padStart(2, '0');
+      const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+      const fmtShort = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      const fmtLong = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      const CFG = { responsive: true, displayModeBar: false, displaylogo: false };
+      const HOVER = { bgcolor: '#2F3A35', bordercolor: '#2F3A35', font: { color: '#fff', family: 'Plus Jakarta Sans, sans-serif', size: 12 } };
+
+      const state = { period: '7', from: 13, to: 0, aView: 'chart', metric: 'milk', gView: 'chart', measure: 'weight' };
+
+      // ---------- Activity data (from saved records) ----------
+      // Milk = SUM(milk_ml) · Feeds = records with milk · Pee/Poop = SUM(level)
+      const DAYS = 60;
+      const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+      const dayDate = i => { const d = new Date(today0); d.setDate(d.getDate() - i); return d; };
+      const rnd = i => { const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+      const EXAMPLE = { 1: [650, 7, 6, 3], 2: [690, 8, 6, 2], 3: [640, 7, 7, 1], 4: [670, 8, 5, 2], 5: [620, 7, 6, 2] };
+      const MISSING = new Set([9, 23, 41]);
+      const daily = [];
+      for (let i = 0; i < DAYS; i++) {
+        const base = { i, date: dayDate(i) };
+        if (MISSING.has(i)) daily.push({ ...base, missing: true });
+        else if (i === 0) daily.push({ ...base, milk: 420, feeds: 4, pee: 5, poop: 1, partial: true });
+        else if (EXAMPLE[i]) { const [m, f, p, q] = EXAMPLE[i]; daily.push({ ...base, milk: m, feeds: f, pee: p, poop: q }); }
+        else daily.push({ ...base, milk: Math.round((600 + rnd(i) * 110 - i * 3) / 10) * 10, feeds: 7 + Math.round(rnd(i + 3)), pee: 4 + Math.round(rnd(i + 7) * 3), poop: i === 6 ? 0 : Math.round(rnd(i + 11) * 3) });
+      }
+      const periodRows = () => state.period === '7' ? daily.slice(0, 7) : state.period === '30' ? daily.slice(0, 30) : daily.slice(state.to, state.from + 1);
+
+      const BOTTLE = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 2.5h3v2.2h-3z"/><rect x="7" y="4.7" width="10" height="2.6" rx="1.3"/><path d="M8 7.3h8v11.6a2.6 2.6 0 0 1-2.6 2.6h-2.8A2.6 2.6 0 0 1 8 18.9z"/></svg>';
+      const DIAPER = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6h17v3.6c0 4.9-3.8 8.9-8.5 8.9s-8.5-4-8.5-8.9z"/><path d="M3.5 9.5h17M7.5 9.5v2.4M16.5 9.5v2.4"/></svg>';
+      const METRICS = {
+        milk:  { label: 'Milk', per: 'ml / day', unit: 'ml', axis: 'Milk (ml)', color: '#7BA7D1', light: '#C6DDF1', tint: 'bg-sage-100 text-sage-700', icon: BOTTLE, dec: 0 },
+        feeds: { label: 'Feeds', per: 'feeds / day', unit: 'feeds', axis: 'Feeds', color: '#A7C7E7', light: '#E1EEF9', tint: 'bg-sage-100 text-sage-700', icon: '<i class="fa-solid fa-repeat text-[11px]"></i>', dec: 1 },
+        pee:   { label: 'Pee', per: 'pee / day', unit: 'pee', axis: 'Pee count', color: '#7CC7BC', light: '#C7E8E3', tint: 'bg-sky-soft text-sky-ink', icon: '<i class="fa-solid fa-droplet text-[11px]"></i>', dec: 1 },
+        poop:  { label: 'Poop', per: 'poop / day', unit: 'poop', axis: 'Poop count', color: '#D3B796', light: '#EADCCB', tint: 'bg-sand-soft text-sand-ink', icon: DIAPER, dec: 1 }
+      };
+
+      function renderTiles() {
+        // Averages over complete recorded days (today excluded as it's in progress)
+        const full = periodRows().filter(r => !r.missing && !r.partial);
+        $('a-tiles').innerHTML = Object.entries(METRICS).map(([k, M]) => {
+          const avg = full.length ? full.reduce((s, r) => s + r[k], 0) / full.length : null;
+          const val = avg == null ? '—' : M.dec ? avg.toFixed(1) : Math.round(avg / 10) * 10;
+          const on = state.metric === k;
+          return `<button type="button" role="radio" aria-checked="${on}" data-metric="${k}" aria-label="${M.label}: ${val} ${M.per}"
+            class="metric rounded-xl px-2 py-2 text-left transition active:scale-[0.97] ${on ? 'bg-sage-50 ring-[1.5px] ring-sage-500' : 'bg-white ring-1 ring-line hover:bg-cream'}">
+            <span class="flex h-6 w-6 items-center justify-center rounded-md ${M.tint}">${M.icon}</span>
+            <p class="mt-1.5 font-display text-[18px] font-semibold leading-none ${on ? 'text-sage-700' : 'text-ink'}">${val}</p>
+            <p class="mt-1 truncate text-[10px] font-medium text-muted">${M.per}</p>
+          </button>`;
+        }).join('');
+      }
+
+      const lbl = r => r.i === 0 ? 'Today' : `${r.date.getDate()}<br>${r.date.toLocaleDateString('en-GB', { month: 'short' })}`;
+      function setReadout(row) {
+        const M = METRICS[state.metric];
+        $('readout-date').textContent = row.partial ? `Today, ${fmtShort(row.date)}` : fmtShort(row.date);
+        if (row.missing) { $('readout-value').className = 'text-[13px] font-semibold text-muted'; $('readout-value').textContent = 'No records'; return; }
+        $('readout-value').className = 'font-display text-[17px] font-semibold text-sage-700';
+        $('readout-value').innerHTML = `${row[state.metric]} ${M.unit}` + (row.partial ? ' <span class="font-sans text-[11px] font-medium text-muted">· in progress</span>' : '');
+      }
+
+      function renderActivityChart() {
+        const rows = periodRows().slice().reverse();
+        const k = state.metric, M = METRICS[k];
+        const x = rows.map(lbl);
+        const yMax = Math.max(1, ...rows.filter(r => !r.missing).map(r => r[k]));
+        const step = rows.length > 20 ? Math.ceil(rows.length / 6) : rows.length > 10 ? 2 : 1;
+        const tickvals = x.filter((_, idx) => (rows.length - 1 - idx) % step === 0);
+        const bars = {
+          type: 'bar', x, y: rows.map(r => r.missing ? null : r[k]),
+          marker: { color: rows.map(r => r.partial ? M.light : M.color), line: { color: rows.map(r => r.partial ? M.color : 'rgba(0,0,0,0)'), width: 1.2 }, pattern: { shape: rows.map(r => r.partial ? '/' : ''), fgcolor: M.color, size: 6, solidity: 0.25 } },
+          customdata: rows.map(r => [r.i === 0 ? 'Today' : fmtShort(r.date), r.partial ? ' (in progress)' : '']),
+          hovertemplate: `%{customdata[0]}<br><b>%{y} ${M.unit}</b>%{customdata[1]}<extra></extra>`
+        };
+        const miss = rows.filter(r => r.missing);
+        const missTrace = { type: 'scatter', mode: 'text', x: miss.map(lbl), y: miss.map(() => yMax * 0.06), text: miss.map(() => '—'), textfont: { color: '#A9B6BE', size: 15 }, hoverinfo: 'skip' };
+        const zeros = rows.filter(r => !r.missing && r[k] === 0);
+        const zeroTrace = { type: 'scatter', mode: 'text', x: zeros.map(lbl), y: zeros.map(() => yMax * 0.06), text: zeros.map(() => '0'), textfont: { color: '#6B746F', size: 11 }, hoverinfo: 'skip' };
+        Plotly.react('activity-chart', [bars, missTrace, zeroTrace], {
+          margin: { t: 6, r: 4, b: 44, l: 40 }, bargap: rows.length > 20 ? 0.25 : 0.38,
+          plot_bgcolor: '#FFFFFF', paper_bgcolor: '#FFFFFF', showlegend: false, hovermode: 'closest',
+          font: { family: 'Plus Jakarta Sans, sans-serif', size: 10, color: '#6B746F' },
+          xaxis: { type: 'category', tickvals, tickangle: 0, showgrid: false, linecolor: '#ECEAE5', fixedrange: true },
+          yaxis: { title: { text: M.axis, font: { size: 10 } }, gridcolor: '#F1F0EC', zeroline: false, rangemode: 'tozero', fixedrange: true, nticks: 5 },
+          hoverlabel: HOVER
+        }, CFG);
+        const el = $('activity-chart');
+        el.removeAllListeners && el.removeAllListeners('plotly_click');
+        el.on('plotly_click', ev => { const row = rows.find(r => lbl(r) === ev.points[0].x); if (row) setReadout(row); });
+        setReadout(rows.find(r => r.i === 1 && !r.missing) || rows[rows.length - 1]);
+      }
+
+      function renderActivityTable() {
+        const dash = '<span class="text-[#A9B6BE]">—</span>';
+        $('a-tbody').innerHTML = periodRows().map((r, idx) => `
+          <tr class="h-[42px] ${idx % 2 ? 'bg-cream/60' : 'bg-white'}">
+            <td class="pl-3 text-[13px] font-semibold text-ink">${r.i === 0 ? 'Today' : fmtShort(r.date)}${r.partial ? '<span class="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-sage-500 align-middle" title="In progress"></span>' : ''}</td>
+            <td class="text-right text-[13px] font-semibold tabular-nums text-sage-700">${r.missing ? dash : r.milk}</td>
+            <td class="text-right text-[13px] tabular-nums">${r.missing ? dash : r.feeds}</td>
+            <td class="text-right text-[13px] tabular-nums">${r.missing ? dash : r.pee}</td>
+            <td class="pr-3 text-right text-[13px] tabular-nums">${r.missing ? dash : r.poop}</td>
+          </tr>`).join('');
+      }
+
+      // ---------- Growth data ----------
+      const DOB = parse('2026-08-18');
+      let measures = [
+        { id: 1, date: '2026-10-18', weight: 5.0, length: 57.0, head: 38.5 },
+        { id: 2, date: '2026-09-25', weight: 4.6, length: 54.0, head: 37.2 },
+        { id: 3, date: '2026-09-10', weight: 4.2, length: 52.0, head: 36.3 },
+        { id: 4, date: '2026-08-18', weight: 3.2, length: 50.0, head: 34.0 }
+      ];
+      const MEASURES = {
+        weight: { label: 'Weight', unit: 'kg', axis: 'Weight (kg)', min: 1, max: 15 },
+        length: { label: 'Length', unit: 'cm', axis: 'Length (cm)', min: 35, max: 80 },
+        head:   { label: 'Head', unit: 'cm', axis: 'Head circumference (cm)', min: 28, max: 50 }
+      };
+      const ageMonths = s => (parse(s) - DOB) / 86400000 / 30.4375;
+      function ageLabel(s) {
+        const days = Math.round((parse(s) - DOB) / 86400000);
+        if (days < 1) return 'Birth';
+        if (days < 7) return 'Newborn';
+        if (days < 56) return `${Math.floor(days / 7)} weeks`;
+        const m = Math.floor(days / 30.4375); return `${m} ${m === 1 ? 'month' : 'months'}`;
+      }
+      // PLACEHOLDER girls' reference curves (not verified HK2020 data)
+      const AGES = [0, 1, 2, 3, 4, 5, 6];
+      const REF = {
+        weight: { p3: [2.4, 3.2, 4.0, 4.6, 5.1, 5.5, 5.8], p50: [3.2, 4.2, 5.1, 5.8, 6.4, 6.9, 7.3], p97: [4.2, 5.4, 6.5, 7.4, 8.1, 8.7, 9.2] },
+        length: { p3: [45.6, 50.0, 53.2, 55.8, 58.0, 59.9, 61.5], p50: [49.1, 53.7, 57.1, 59.8, 62.1, 64.0, 65.7], p97: [52.7, 57.4, 60.9, 63.8, 66.2, 68.2, 70.0] },
+        head:   { p3: [31.7, 34.3, 36.0, 37.2, 38.2, 39.0, 39.7], p50: [33.9, 36.5, 38.3, 39.5, 40.6, 41.5, 42.2], p97: [36.1, 38.8, 40.5, 41.9, 43.0, 43.9, 44.6] }
+      };
+      Object.values(REF).forEach(r => { r.p15 = r.p3.map((v, k) => +(v + (r.p50[k] - v) * 0.55).toFixed(2)); r.p85 = r.p50.map((v, k) => +(v + (r.p97[k] - v) * 0.45).toFixed(2)); });
+
+      const series = k => measures.filter(m => m[k] != null).sort((a, b) => b.date.localeCompare(a.date));
+      const refAt = (k, p, age) => { const r = REF[k][p], i = Math.min(5, Math.floor(age)), f = age - i; return r[i] + (r[i + 1] - r[i]) * f; };
+      function band(k, m) {
+        const age = ageMonths(m.date), v = m[k];
+        const cuts = [['p3', '3rd'], ['p15', '15th'], ['p50', '50th'], ['p85', '85th'], ['p97', '97th']];
+        if (v < refAt(k, 'p3', age)) return 'Below 3rd';
+        if (v >= refAt(k, 'p97', age)) return 'Above 97th';
+        for (let i = 0; i < cuts.length - 1; i++) if (v < refAt(k, cuts[i + 1][0], age)) return `${cuts[i][1]}–${cuts[i + 1][1]}`;
+        return '—';
+      }
+
+      function renderGrowthTiles() {
+        const latest = measures.map(m => m.date).sort().pop();
+        const days = Math.round((today0 - parse(latest)) / 86400000);
+        $('last-measured').textContent = `Last measured ${fmtShort(parse(latest))}${days > 0 ? ` · ${days} ${days === 1 ? 'day' : 'days'} ago` : ' · today'}`;
+        $('g-tiles').innerHTML = Object.entries(MEASURES).map(([k, M]) => {
+          const pts = series(k), cur = pts[0], prev = pts[1], on = state.measure === k;
+          const diff = cur && prev ? cur[k] - prev[k] : null;
+          return `<button type="button" role="radio" aria-checked="${on}" data-measure="${k}" aria-label="${M.label} ${cur ? cur[k].toFixed(1) + ' ' + M.unit : 'not measured'}" class="measure rounded-xl px-2.5 py-2 text-left transition active:scale-[0.98] ${on ? 'bg-sage-50 ring-[1.5px] ring-sage-500' : 'bg-white ring-1 ring-line hover:bg-cream'}">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">${M.label}</p>
+            <p class="mt-1 leading-none"><span class="font-display text-[20px] font-semibold ${on ? 'text-sage-700' : 'text-ink'}">${cur ? cur[k].toFixed(1) : '—'}</span><span class="ml-0.5 text-[11px] font-semibold text-muted">${M.unit}</span></p>
+            <p class="mt-1 text-[11px] font-semibold ${diff != null ? 'text-sky-ink' : 'text-muted'}">${diff != null ? `${diff >= 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)} ${M.unit}` : 'Not measured'}</p>
+          </button>`;
+        }).join('');
+
+        // Insights strip for the selected measurement
+        const k = state.measure, M = MEASURES[k], pts = series(k), cur = pts[0], prev = pts[1], first = pts[pts.length - 1];
+        const cell = (label, value, sub) => `<div class="px-2 text-center"><p class="text-[10px] font-semibold uppercase tracking-[0.05em] text-muted">${label}</p><p class="mt-1 text-[14px] font-semibold text-ink">${value}</p><p class="text-[10px] text-muted">${sub}</p></div>`;
+        if (!cur) { $('g-stats').innerHTML = cell('Since birth', '—', '') + cell('Recent pace', '—', '') + cell('Percentile', '—', ''); return; }
+        const total = first && first !== cur ? cur[k] - first[k] : null;
+        let pace = '—', paceSub = '';
+        if (prev) {
+          const d = (parse(cur.date) - parse(prev.date)) / 86400000;
+          pace = k === 'weight' ? `${Math.round((cur[k] - prev[k]) / d * 7 * 1000)} g/wk` : `${((cur[k] - prev[k]) / d * 30.4375).toFixed(1)} cm/mo`;
+          paceSub = `since ${fmtShort(parse(prev.date))}`;
+        }
+        const now = band(k, cur), before = prev ? band(k, prev) : null;
+        $('g-stats').innerHTML =
+          cell('Since birth', total != null ? `+${total.toFixed(1)} ${M.unit}` : '—', first ? `from ${first[k].toFixed(1)} ${M.unit}` : '') +
+          cell('Recent pace', pace, paceSub) +
+          cell('Percentile', now, before == null ? 'first reading' : before === now ? 'same band as before' : `was ${before}`);
+      }
+
+      function renderGrowthChart() {
+        const key = state.measure, unit = MEASURES[key].unit, ref = REF[key];
+        const pts = measures.filter(m => m[key] != null).sort((a, b) => a.date.localeCompare(b.date));
+        const line = p => ({ type: 'scatter', mode: 'lines', x: AGES, y: ref[p], line: { color: p === 'p50' ? '#A9B6BE' : '#D6DDE1', width: p === 'p50' ? 1.5 : 1, dash: p === 'p50' ? 'solid' : 'dot', shape: 'spline' }, hoverinfo: 'skip' });
+        const curves = [line('p3'), line('p15'), { ...line('p85'), fill: 'tonexty', fillcolor: 'rgba(167,199,231,0.18)' }, line('p50'), line('p97')];
+        const baby = {
+          type: 'scatter', mode: 'lines+markers', x: pts.map(m => ageMonths(m.date)), y: pts.map(m => m[key]),
+          line: { color: '#7BA7D1', width: 3, shape: 'spline' }, marker: { color: '#3A6A99', size: 9, line: { color: '#FFFFFF', width: 2 } },
+          customdata: pts.map(m => [ageLabel(m.date), fmtShort(parse(m.date)), band(key, m)]),
+          hovertemplate: `%{customdata[0]} · %{customdata[1]}<br><b>%{y} ${unit}</b><extra></extra>`
+        };
+        const annotations = [['p3', '3rd'], ['p50', '50th'], ['p97', '97th']].map(([p, t]) => ({ x: 6, y: ref[p][6], text: t, showarrow: false, xanchor: 'left', xshift: 3, font: { size: 9, color: '#8C99A1' } }));
+        Plotly.react('growth-chart', [...curves, baby], {
+          margin: { t: 6, r: 30, b: 36, l: 36 }, plot_bgcolor: '#FFFFFF', paper_bgcolor: '#FFFFFF', showlegend: false, hovermode: 'closest',
+          font: { family: 'Plus Jakarta Sans, sans-serif', size: 10, color: '#6B746F' },
+          xaxis: { title: { text: 'Age (months)', font: { size: 10 } }, range: [-0.15, 6.05], tickvals: AGES, ticktext: ['Birth', '1', '2', '3', '4', '5', '6'], gridcolor: '#F4F3EF', zeroline: false, fixedrange: true },
+          yaxis: { title: { text: MEASURES[key].axis, font: { size: 10 } }, gridcolor: '#F1F0EC', zeroline: false, fixedrange: true },
+          annotations, hoverlabel: HOVER
+        }, CFG);
+        const el = $('growth-chart');
+        el.removeAllListeners && el.removeAllListeners('plotly_click');
+        el.on('plotly_click', ev => {
+          const p = ev.points.find(pt => pt.customdata); if (!p) return;
+          $('growth-readout').innerHTML = `<span class="text-ink">${p.customdata[0]}</span> · ${p.customdata[1]} · <span class="font-display text-[16px] font-semibold text-sage-700">${p.y} ${unit}</span> · ${p.customdata[2]}`;
+        });
+        $('growth-readout').textContent = 'Tap a point for age, date and value';
+      }
+
+      function renderGrowthTable() {
+        const dash = '<span class="text-[#A9B6BE]">—</span>';
+        $('g-tbody').innerHTML = [...measures].sort((a, b) => b.date.localeCompare(a.date)).map((m, idx) => `
+          <tr data-id="${m.id}" tabindex="0" role="button" aria-label="Edit measurement from ${fmtShort(parse(m.date))}" class="g-row h-[46px] cursor-pointer transition hover:bg-sage-50 focus:bg-sage-50 focus:outline-none ${idx % 2 ? 'bg-cream/60' : 'bg-white'}">
+            <td class="pl-3 text-[12px] font-semibold text-ink">${fmtShort(parse(m.date))}</td>
+            <td class="text-[12px] text-muted">${ageLabel(m.date)}</td>
+            <td class="text-right text-[12px] font-semibold tabular-nums text-sage-700">${m.weight != null ? m.weight.toFixed(1) + '<span class="text-[10px] text-muted"> kg</span>' : dash}</td>
+            <td class="text-right text-[12px] font-semibold tabular-nums">${m.length != null ? m.length.toFixed(1) + '<span class="text-[10px] text-muted"> cm</span>' : dash}</td>
+            <td class="pr-3 text-right text-[12px] font-semibold tabular-nums">${m.head != null ? m.head.toFixed(1) + '<span class="text-[10px] text-muted"> cm</span>' : dash}</td>
+          </tr>`).join('');
+      }
+
+      // ---------- Render ----------
+      function paintSeg(sel, attr, value) {
+        document.querySelectorAll(sel).forEach(b => {
+          const on = b.dataset[attr] === value;
+          b.setAttribute('aria-checked', on);
+          b.classList.toggle('bg-sage-700', on); b.classList.toggle('text-white', on);
+          b.classList.toggle('text-muted', !on);
+        });
+      }
+      function renderActivity() {
+        paintSeg('.period', 'period', state.period);
+        paintSeg('[data-scope="a"] .view', 'view', state.aView);
+        $('custom-range').classList.toggle('hidden', state.period !== 'custom');
+        $('custom-range').classList.toggle('grid', state.period === 'custom');
+        $('range-label').textContent = state.period === 'custom' ? `${fmtShort(dayDate(state.from))} – ${fmtShort(dayDate(state.to))}` : `Last ${periodRows().length} days`;
+        renderTiles();
+        $('a-chart-view').classList.toggle('hidden', state.aView !== 'chart');
+        $('a-table-view').classList.toggle('hidden', state.aView !== 'table');
+        if (state.aView === 'chart') renderActivityChart(); else renderActivityTable();
+      }
+      function renderGrowth() {
+        paintSeg('[data-scope="g"] .view', 'view', state.gView);
+        renderGrowthTiles();
+        $('g-chart-view').classList.toggle('hidden', state.gView !== 'chart');
+        $('g-table-view').classList.toggle('hidden', state.gView !== 'table');
+        if (state.gView === 'chart') renderGrowthChart(); else renderGrowthTable();
+      }
+
+      document.addEventListener('click', e => {
+        const t = e.target.closest('.period, .view, .metric, .measure'); if (!t) return;
+        if (t.dataset.period) { state.period = t.dataset.period; renderActivity(); }
+        if (t.dataset.metric) { state.metric = t.dataset.metric; if (state.aView !== 'chart') state.aView = 'chart'; renderActivity(); }
+        if (t.dataset.measure) { state.measure = t.dataset.measure; if (state.gView !== 'chart') state.gView = 'chart'; renderGrowth(); }
+        if (t.dataset.view) {
+          const scope = t.closest('.view-seg').dataset.scope;
+          if (scope === 'a') { state.aView = t.dataset.view; renderActivity(); } else { state.gView = t.dataset.view; renderGrowth(); }
+        }
+      });
+
+      // Custom range
+      const offsetOf = s => Math.round((today0 - parse(s)) / 86400000);
+      function syncRange() {
+        $('from-input').value = ymd(dayDate(state.from)); $('to-input').value = ymd(dayDate(state.to));
+        ['from-input', 'to-input'].forEach(id => { $(id).max = ymd(today0); $(id).min = ymd(dayDate(DAYS - 1)); });
+        $('from-label').textContent = fmtShort(dayDate(state.from)); $('to-label').textContent = fmtShort(dayDate(state.to));
+      }
+      $('from-input').addEventListener('change', e => { if (!e.target.value) return; state.from = Math.min(DAYS - 1, Math.max(0, offsetOf(e.target.value))); if (state.from < state.to) state.to = state.from; syncRange(); renderActivity(); });
+      $('to-input').addEventListener('change', e => { if (!e.target.value) return; state.to = Math.min(DAYS - 1, Math.max(0, offsetOf(e.target.value))); if (state.to > state.from) state.from = state.to; syncRange(); renderActivity(); });
+      syncRange();
+
+      // ---------- Edit measurement ----------
+      let editing = null;
+      const sheet = $('edit-sheet');
+      const openSheet = o => { sheet.classList.toggle('opacity-0', !o); sheet.classList.toggle('pointer-events-none', !o); $('sheet-panel').classList.toggle('translate-y-8', !o); sheet.setAttribute('aria-hidden', !o); };
+      document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => openSheet(false)));
+      const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+      function validateEdit() {
+        const w = num($('edit-weight').value), l = num($('edit-length').value), h = num($('edit-head').value);
+        const ok = (w != null || l != null || h != null) && (w == null || (w >= 1 && w <= 15)) && (l == null || (l >= 35 && l <= 80)) && (h == null || (h >= 28 && h <= 50));
+        $('edit-error').classList.toggle('hidden', ok); $('edit-save').disabled = !ok;
+      }
+      function openEdit(id) {
+        editing = measures.find(m => m.id === id);
+        $('edit-weight').value = editing.weight != null ? editing.weight.toFixed(1) : '';
+        $('edit-length').value = editing.length != null ? editing.length.toFixed(1) : '';
+        $('edit-head').value = editing.head != null ? editing.head.toFixed(1) : '';
+        $('edit-date').value = editing.date; $('edit-date').max = ymd(today0); $('edit-date').min = ymd(DOB);
+        $('edit-date-label').textContent = fmtLong(parse(editing.date));
+        $('sheet-sub').textContent = `${fmtShort(parse(editing.date))} · ${ageLabel(editing.date)}`;
+        validateEdit(); openSheet(true);
+      }
+      ['edit-weight', 'edit-length', 'edit-head'].forEach(id => $(id).addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9.,]/g, ''); validateEdit(); }));
+      $('edit-date').addEventListener('change', e => { if (e.target.value > ymd(today0)) e.target.value = ymd(today0); $('edit-date-label').textContent = fmtLong(parse(e.target.value)); });
+      $('g-tbody').addEventListener('click', e => { const r = e.target.closest('.g-row'); if (r) openEdit(+r.dataset.id); });
+      $('g-tbody').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('g-row')) { e.preventDefault(); openEdit(+e.target.dataset.id); } });
+      $('edit-save').addEventListener('click', () => {
+        if (!editing || $('edit-save').disabled) return;
+        editing.weight = num($('edit-weight').value); editing.length = num($('edit-length').value); editing.head = num($('edit-head').value); editing.date = $('edit-date').value;
+        openSheet(false); renderGrowth(); toast('Measurement updated');
+      });
+
+      window.addEventListener('offline', () => { $('sync-text').textContent = 'Offline · saved records'; });
+      window.addEventListener('online', () => { $('sync-text').textContent = 'Synced'; });
+
+      let tt;
+      function toast(text) {
+        $('toast-text').textContent = text;
+        const t = $('toast'); t.classList.remove('opacity-0', 'translate-y-3');
+        clearTimeout(tt); tt = setTimeout(() => t.classList.add('opacity-0', 'translate-y-3'), 3000);
+      }
+
+      window.addEventListener('load', function () {
+        try { renderActivity(); renderGrowth(); }
+        catch (e) {
+          ['activity-chart', 'growth-chart'].forEach(id => { $(id).innerHTML = '<div class="flex h-full items-center justify-center text-[13px] text-muted">Chart unavailable — switch to Table view.</div>'; });
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -18,12 +18,14 @@ export type BabyRow = {
   id: string;
   name: string;
   date_of_birth: string;
+  daily_milk_ref_ml: number | null;
   created_at: number;
   updated_at: number;
 };
 
 export type BabyProfile = BabyDetails & {
   id: string;
+  dailyMilkRefMl: number | null;
   weights: { id: string; date: string; kg: number }[];
 };
 
@@ -48,7 +50,9 @@ export const findFirstBaby = async (): Promise<BabyRow | null> => {
   if (ids.length === 0) return null;
   const { data, error } = await supabase
     .from("babies")
-    .select("id, name, date_of_birth, created_at, updated_at")
+    .select(
+      "id, name, date_of_birth, daily_milk_ref_ml, created_at, updated_at",
+    )
     .in("id", ids)
     .is("deleted_at", null)
     .order("created_at", { ascending: true })
@@ -73,14 +77,12 @@ export const createBaby = async (input: NewBaby): Promise<string> => {
   });
   if (error) throw error;
 
-  const { error: memberError } = await supabase
-    .from("baby_members")
-    .insert({
-      baby_id: babyId,
-      user_id: userId,
-      role: "owner",
-      joined_at: now,
-    });
+  const { error: memberError } = await supabase.from("baby_members").insert({
+    baby_id: babyId,
+    user_id: userId,
+    role: "owner",
+    joined_at: now,
+  });
   if (memberError) throw memberError;
 
   if (input.weightKg !== undefined && input.weightDate !== undefined) {
@@ -106,6 +108,7 @@ export const loadBabyProfile = async (): Promise<BabyProfile | null> => {
     id: baby.id,
     name: baby.name,
     dateOfBirth: baby.date_of_birth,
+    dailyMilkRefMl: baby.daily_milk_ref_ml,
     weights: (data ?? []).map((w) => ({
       id: w.id,
       date: w.measurement_date,
@@ -125,6 +128,17 @@ export const updateBaby = async (
       date_of_birth: input.dateOfBirth,
       updated_at: Date.now(),
     })
+    .eq("id", babyId);
+  if (error) throw error;
+};
+
+export const updateDailyMilkRef = async (
+  babyId: string,
+  ml: number | null,
+): Promise<void> => {
+  const { error } = await supabase
+    .from("babies")
+    .update({ daily_milk_ref_ml: ml, updated_at: Date.now() })
     .eq("id", babyId);
   if (error) throw error;
 };

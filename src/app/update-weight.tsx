@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS } from "../constants/theme";
+import { DateTimeWheel } from "../components/datetime-wheel";
 import { addWeight, loadBabyProfile, type BabyProfile } from "../db/babies";
 import { formatDate } from "../i18n/format";
 import { useI18n } from "../i18n/i18n";
@@ -75,7 +76,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
     : null;
   const today = startOfDay(new Date());
   const [weightText, setWeightText] = useState(
-    PREVIOUS ? PREVIOUS.kg.toFixed(1) : "",
+    PREVIOUS ? PREVIOUS.kg.toFixed(2) : "",
   );
   const [date, setDate] = useState(today);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -85,8 +86,8 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
   if (kg === null) error = t("weight.enterFirst", { name: BABY_NAME });
   else if (kg < MIN_KG || kg > MAX_KG)
     error = t("weight.range", {
-      min: MIN_KG.toFixed(1),
-      max: MAX_KG.toFixed(1),
+      min: MIN_KG.toFixed(2),
+      max: MAX_KG.toFixed(2),
     });
   const invalid = error !== "";
   const isEarlier =
@@ -96,16 +97,16 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
     const base = kg ?? PREVIOUS?.kg ?? MIN_KG;
     const next = Math.min(
       MAX_KG,
-      Math.max(MIN_KG, Math.round((base + delta) * 10) / 10),
+      Math.max(MIN_KG, Math.round((base + delta) * 100) / 100),
     );
-    setWeightText(next.toFixed(1));
+    setWeightText(next.toFixed(2));
   };
 
   const onWeightChange = (text: string) => {
     const cleaned = text.replace(/[^0-9.,]/g, "").replace(",", ".");
     const [whole, ...rest] = cleaned.split(".");
     setWeightText(
-      rest.length ? `${whole}.${rest.join("").slice(0, 1)}` : whole,
+      rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole,
     );
   };
 
@@ -130,9 +131,9 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
     if (invalid || kg === null) return;
     if (PREVIOUS && Math.abs(kg - PREVIOUS.kg) >= BIG_CHANGE_KG) {
       const message = t("weight.bigChange", {
-        next: kg.toFixed(1),
+        next: kg.toFixed(2),
         name: BABY_NAME,
-        prev: PREVIOUS.kg.toFixed(1),
+        prev: PREVIOUS.kg.toFixed(2),
       });
       if (Platform.OS === "web") {
         if (window.confirm(`${t("weight.checkTitle")}\n\n${message}`)) save(kg);
@@ -163,6 +164,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
       </View>
 
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -178,7 +180,7 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
           <View style={styles.previousBlock}>
             <Text style={styles.previousLabel}>{t("weight.previous")}</Text>
             <Text style={styles.previousValue}>
-              {PREVIOUS ? PREVIOUS.kg.toFixed(1) : "—"}{" "}
+              {PREVIOUS ? PREVIOUS.kg.toFixed(2) : "—"}{" "}
               <Text style={styles.previousUnit}>kg</Text>
             </Text>
           </View>
@@ -204,10 +206,10 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
                 value={weightText}
                 onChangeText={onWeightChange}
                 onBlur={() => {
-                  if (kg !== null && !invalid) setWeightText(kg.toFixed(1));
+                  if (kg !== null && !invalid) setWeightText(kg.toFixed(2));
                 }}
                 keyboardType="decimal-pad"
-                maxLength={4}
+                maxLength={5}
                 selectTextOnFocus
                 style={styles.weightInput}
               />
@@ -236,22 +238,33 @@ function WeightForm({ profile }: { profile: BabyProfile }) {
         </View>
 
         <Text style={styles.fieldLabel}>{t("weight.dateTitle")}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setPickerOpen((open) => !open)}
-          style={styles.dateRow}
-        >
-          <View style={styles.calendarIcon}>
-            <FontAwesome6 name="calendar" size={14} color={COLORS.blue700} />
+        {Platform.OS === "web" ? (
+          <View style={styles.wheelPanel}>
+            <DateTimeWheel
+              value={date}
+              maximum={today}
+              onChange={setDate}
+              dateOnly
+            />
           </View>
-          <Text style={styles.dateText}>{dateLabel(date, lang)}</Text>
-          {sameDay(date, today) && (
-            <View style={styles.todayBadge}>
-              <Text style={styles.todayText}>{t("common.today")}</Text>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setPickerOpen((open) => !open)}
+            style={styles.dateRow}
+          >
+            <View style={styles.calendarIcon}>
+              <FontAwesome6 name="calendar" size={14} color={COLORS.blue700} />
             </View>
-          )}
-        </Pressable>
-        {pickerOpen && (
+            <Text style={styles.dateText}>{dateLabel(date, lang)}</Text>
+            {sameDay(date, today) && (
+              <View style={styles.todayBadge}>
+                <Text style={styles.todayText}>{t("common.today")}</Text>
+              </View>
+            )}
+          </Pressable>
+        )}
+        {pickerOpen && Platform.OS !== "web" && (
           <DateTimePicker
             value={date}
             mode="date"
@@ -329,6 +342,17 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.display,
     fontSize: 20,
     color: COLORS.ink,
+  },
+  wheelPanel: {
+    marginTop: 10,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.line,
+    backgroundColor: "#FFFFFF",
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: 20,
@@ -417,6 +441,7 @@ const styles = StyleSheet.create({
   stepButton: {
     width: 56,
     height: 56,
+    flexShrink: 0,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
@@ -428,13 +453,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.blue700,
   },
   weightInputRow: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "baseline",
     justifyContent: "center",
     gap: 6,
   },
   weightInput: {
-    minWidth: 92,
+    flexShrink: 1,
+    minWidth: 60,
     fontFamily: FONTS.display,
     fontSize: 48,
     color: COLORS.ink,

@@ -9,6 +9,7 @@ export type DashboardBaby = {
   name: string;
   dob: string;
   weightKg: number;
+  dailyMilkRefMl: number | null;
 };
 
 // One row per saved activity, used by the Recent Activities table.
@@ -85,6 +86,7 @@ export async function loadDashboard(): Promise<DashboardData> {
       name: baby.name,
       dob: baby.date_of_birth,
       weightKg: weight?.weight_kg ?? 0,
+      dailyMilkRefMl: baby.daily_milk_ref_ml,
     },
     records,
     recent,

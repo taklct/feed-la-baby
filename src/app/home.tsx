@@ -62,13 +62,6 @@ const greetingFor = (
   return { text: t("home.goodEvening"), icon: "moon", color: "#8B87B5" };
 };
 
-// 100–150 ml per kg, capped at 1000 ml, rounded to 10 ml.
-const milkReference = (weightKg: number) => {
-  const at = (mlPerKg: number) =>
-    Math.round(Math.min(weightKg * mlPerKg, 1000) / 10) * 10;
-  return { min: at(100), max: at(150) };
-};
-
 // Average gap between the four most recent milk feeds, rounded to 15 min.
 const nextFeed = (
   records: LogRecord[],
@@ -172,21 +165,33 @@ export default function HomeScreen() {
   });
   const eligible = BABY.weightKg > 0;
   const feed = nextFeed(RECORDS, ageDays, BABY.name, t, lang);
-  const milkRef = milkReference(BABY.weightKg);
 
-  const guide = eligible
-    ? {
-        label: t("home.dailyMilkRef"),
-        value: `~${milkRef.min}–${milkRef.max}`,
-        unit: "ml/day",
-        text: t("home.milkRefText", { name: BABY.name }),
-      }
-    : {
-        label: t("home.generalGuidance"),
-        value: t("home.every2to4"),
-        unit: "",
-        text: t("home.typicalRhythm", { name: BABY.name }),
-      };
+  const dailyMilkMl =
+    BABY.dailyMilkRefMl !== null && eligible
+      ? Math.round(BABY.dailyMilkRefMl * BABY.weightKg)
+      : null;
+
+  const guide =
+    dailyMilkMl !== null
+      ? {
+          label: t("home.dailyMilkRef"),
+          value: String(dailyMilkMl),
+          unit: "ml/day",
+          text: t("home.milkRefText", { name: BABY.name }),
+        }
+      : eligible
+        ? {
+            label: t("home.dailyMilkRef"),
+            value: "—",
+            unit: "",
+            text: t("home.milkRefNotSet", { name: BABY.name }),
+          }
+        : {
+            label: t("home.generalGuidance"),
+            value: t("home.every2to4"),
+            unit: "",
+            text: t("home.typicalRhythm", { name: BABY.name }),
+          };
 
   const today = RECORDS.filter((r) => r.t >= 0);
   const milk = today.filter((r) => r.type === "milk");
@@ -220,7 +225,7 @@ export default function HomeScreen() {
             <Text style={styles.name}>{BABY.name}</Text>
             <Text style={styles.meta}>
               {BABY.weightKg > 0
-                ? `${ageText} · ${BABY.weightKg.toFixed(1)} kg`
+                ? `${ageText} · ${BABY.weightKg.toFixed(2)} kg`
                 : ageText}
             </Text>
           </View>
